@@ -1,9 +1,9 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import ApiResponse from "../../utils/api-response.js";
 
 const router = Router();
 
-router.get("/", (_, res) => {
+router.get("/", (_req: Request, res: Response) => {
   return res.status(200).json(
     new ApiResponse(
       200,

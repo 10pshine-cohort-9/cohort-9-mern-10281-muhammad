@@ -7,5 +7,5 @@ export default function notFound(
   _res: Response,
   next: NextFunction,
 ) {
-  next(new ApiError(404, `Cannot ${req.method} ${req.originalUrl}`));
+  next(new ApiError(404, `Cannot ${req.method} ${req.path}`));
 }

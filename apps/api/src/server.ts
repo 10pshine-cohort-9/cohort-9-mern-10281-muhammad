@@ -1,17 +1,19 @@
-import express from "express";
-import helmet from "helmet";
+import app from "./app.js";
+import connectDB from "./config/db.js";
+import env from "./config/env.js";
+import logger from "./config/logger.js";
 
-const app = express();
+async function start() {
+  try {
+    await connectDB(env.MONGO_URI);
 
-app.use(helmet());
-app.use(express.json());
+    app.listen(env.PORT, () => {
+      logger.info(`Server started at port ${env.PORT}`);
+    });
+  } catch (error) {
+    logger.error({ err: error }, "Server startup failed.");
+    process.exit(1);
+  }
+}
 
-const PORT = 5000;
-
-app.get("/", (req, res) => {
-  res.end("Hello, World!");
-});
-
-app.listen(PORT, () => {
-  console.log("Server started at port", PORT);
-});
+void start();

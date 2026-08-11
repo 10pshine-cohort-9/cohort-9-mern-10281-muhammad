@@ -1,16 +1,19 @@
 import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 
-export default function validate(schema: z.ZodType) {
-  return function (req: Request, res: Response, next: NextFunction) {
-    const result = schema.safeParse(req.body);
+export default function validate<T extends z.ZodType>(schema: T) {
+  return async function (req: Request, _res: Response, next: NextFunction) {
+    try {
+      const result = await schema.safeParseAsync(req.body);
 
-    if (!result.success) {
-      throw result.error;
+      if (!result.success) {
+        return next(result.error);
+      }
+
+      req.body = result.data;
+      next();
+    } catch (error) {
+      next(error);
     }
-
-    req.body = result.data;
-
-    next();
   };
 }

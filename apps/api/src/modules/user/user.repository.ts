@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import User from "./user.model.js";
 import { CreateUserInput, UserDocument } from "./user.types.js";
 
@@ -31,7 +32,7 @@ class UserRepository {
       .exec();
   }
 
-  async findById(id: any): Promise<UserDocument | null> {
+  async findById(id: mongoose.Types.ObjectId): Promise<UserDocument | null> {
     return User.findById(id);
   }
 }

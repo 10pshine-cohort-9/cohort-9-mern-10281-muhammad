@@ -31,6 +31,10 @@ const userSchema = new mongoose.Schema<
       minlength: 8,
       select: false,
     },
+    refreshToken: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true, versionKey: false },
 );
@@ -40,7 +44,11 @@ userSchema.pre("save", async function () {
     return;
   }
 
-  this.password = await bcrypt.hash(this.password, 12);
+  try {
+    this.password = await bcrypt.hash(this.password, 12);
+  } catch (error) {
+    throw new Error("Failed to hash password", { cause: error });
+  }
 });
 
 userSchema.methods.comparePassword = async function (

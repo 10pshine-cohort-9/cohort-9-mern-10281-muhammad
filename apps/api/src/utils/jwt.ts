@@ -25,39 +25,55 @@ export function createRefreshToken(id: string): string {
 }
 
 export function verifyAccessToken(token: string): TokenPayload {
-  const decoded = jwt.verify(token, env.ACCESS_SECRET);
+  try {
+    const decoded = jwt.verify(token, env.ACCESS_SECRET);
 
-  if (
-    typeof decoded !== "object" ||
-    decoded === null ||
-    typeof decoded.id !== "string" ||
-    decoded.type !== "access"
-  ) {
+    if (
+      typeof decoded !== "object" ||
+      decoded === null ||
+      typeof decoded.id !== "string" ||
+      decoded.type !== "access"
+    ) {
+      throw new UnauthorizedError("Invalid token");
+    }
+
+    return {
+      id: decoded.id,
+      type: "access",
+    };
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      throw error;
+    }
+
     throw new UnauthorizedError("Invalid token");
   }
-
-  return {
-    id: decoded.id,
-    type: "access",
-  };
 }
 
 export function verifyRefreshToken(token: string): TokenPayload {
-  const decoded = jwt.verify(token, env.REFRESH_SECRET);
+  try {
+    const decoded = jwt.verify(token, env.REFRESH_SECRET);
 
-  if (
-    typeof decoded !== "object" ||
-    decoded === null ||
-    typeof decoded.id !== "string" ||
-    decoded.type !== "refresh"
-  ) {
+    if (
+      typeof decoded !== "object" ||
+      decoded === null ||
+      typeof decoded.id !== "string" ||
+      decoded.type !== "refresh"
+    ) {
+      throw new UnauthorizedError("Invalid token");
+    }
+
+    return {
+      id: decoded.id,
+      type: "refresh",
+    };
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      throw error;
+    }
+
     throw new UnauthorizedError("Invalid token");
   }
-
-  return {
-    id: decoded.id,
-    type: "refresh",
-  };
 }
 
 const OPTIONS: CookieOptions = {

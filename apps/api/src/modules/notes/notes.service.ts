@@ -7,8 +7,13 @@ import {
   NoteDocument,
   UpdateNoteInput,
 } from "./notes.types.js";
-import { ConflictError, NotFoundError } from "../../utils/http-errors.js";
+import {
+  BadRequestError,
+  ConflictError,
+  NotFoundError,
+} from "../../utils/http-errors.js";
 import logger from "../../config/logger.js";
+import { MongoDuplicateKeyError } from "../../types/mongo-error.types.js";
 
 export default class NotesService {
   private repository: NotesRepository;
@@ -28,7 +33,7 @@ export default class NotesService {
     });
 
     if (!baseSlug) {
-      throw new ConflictError("Invalid title for slug generation");
+      throw new BadRequestError("Invalid title");
     }
 
     let slug = baseSlug;
@@ -166,7 +171,12 @@ export default class NotesService {
     }
   }
 
-  private isDuplicateSlugError(err: any): boolean {
-    return err?.code === 11000 && err?.keyPattern?.slug !== undefined;
+  private isDuplicateSlugError(err: unknown): err is MongoDuplicateKeyError {
+    return (
+      typeof err === "object" &&
+      err !== null &&
+      (err as any).code === 11000 &&
+      (err as any).keyPattern?.slug !== undefined
+    );
   }
 }

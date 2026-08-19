@@ -1,5 +1,11 @@
 import ApiError, { ApiErrorDetails } from "./api-error.js";
 
+export class BadRequestError extends ApiError {
+  constructor(message = "Bad Request", errors?: ApiErrorDetails) {
+    super(400, message, errors);
+  }
+}
+
 export class UnauthorizedError extends ApiError {
   constructor(message = "Unauthorized", errors?: ApiErrorDetails) {
     super(401, message, errors);

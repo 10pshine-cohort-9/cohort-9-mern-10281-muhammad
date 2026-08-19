@@ -9,9 +9,10 @@ import {
 export default class NotesRepository {
   async create(
     userId: mongoose.Types.ObjectId,
+    slug: string,
     data: CreateNoteInput,
   ): Promise<NoteDocument> {
-    return Note.create({ userId, ...data });
+    return Note.create({ userId, slug, ...data });
   }
 
   async findAllByUser(
@@ -34,22 +35,15 @@ export default class NotesRepository {
     return Note.findOne({ slug, userId });
   }
 
-  async existsBySlugAndUser(
-    slug: string,
-    userId: mongoose.Types.ObjectId,
-  ): Promise<boolean> {
-    return (await Note.exists({ slug, userId })) !== null;
-  }
-
   async updateBySlugAndUser(
     slug: string,
     userId: mongoose.Types.ObjectId,
     data: UpdateNoteInput,
   ) {
-    return Note.updateOne({ slug, userId }, data);
+    return Note.findOneAndUpdate({ slug, userId }, data, { returnDocument: "after" });
   }
 
   async deleteBySlugAndUser(slug: string, userId: mongoose.Types.ObjectId) {
-    return Note.deleteOne({ slug, userId });
+    return Note.findOneAndDelete({ slug, userId });
   }
 }

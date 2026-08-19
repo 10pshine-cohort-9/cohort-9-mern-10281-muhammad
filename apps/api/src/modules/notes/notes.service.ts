@@ -7,7 +7,7 @@ import {
   NoteDocument,
   UpdateNoteInput,
 } from "./notes.types.js";
-import { NotFoundError } from "../../utils/http-errors.js";
+import { ConflictError, NotFoundError } from "../../utils/http-errors.js";
 import logger from "../../config/logger.js";
 
 export default class NotesService {
@@ -21,28 +21,43 @@ export default class NotesService {
     userId: mongoose.Types.ObjectId,
     data: CreateNoteInput,
   ): Promise<NoteDocument> {
-    try {
-      const slug = await this.uniqueSlugByTitle(data.title, userId);
+    const baseSlug = slugify(data.title, {
+      lower: true,
+      strict: true,
+      trim: true,
+    });
 
-      const note = await this.repository.create(userId, {
-        ...data,
-        slug,
-      });
-
-      logger.info(
-        { userId: userId.toString(), noteId: note._id.toString() },
-        "Note created successfully",
-      );
-
-      return note;
-    } catch (error) {
-      logger.error(
-        { err: error, userId: userId.toString() },
-        "Failed to create note",
-      );
-
-      throw error;
+    if (!baseSlug) {
+      throw new ConflictError("Invalid title for slug generation");
     }
+
+    let slug = baseSlug;
+
+    const MAX_RETRIES = 3;
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        const note = await this.repository.create(userId, slug, data);
+
+        logger.info(
+          { userId: userId.toString(), slug },
+          "Note created successfully",
+        );
+
+        return note;
+      } catch (err) {
+        if (this.isDuplicateSlugError(err)) {
+          slug = `${baseSlug}-${attempt + 1}`;
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    logger.error("Failed to create the note");
+    throw new ConflictError(
+      "Failed to generate a unique slug after multiple attempts",
+    );
   }
 
   async getAll(userId: mongoose.Types.ObjectId): Promise<NoteDocument[]> {
@@ -96,15 +111,17 @@ export default class NotesService {
     slug: string,
     userId: mongoose.Types.ObjectId,
     data: UpdateNoteInput,
-  ) {
+  ): Promise<NoteDocument> {
     try {
-      await this.get(slug, userId);
-
       const result = await this.repository.updateBySlugAndUser(
         slug,
         userId,
         data,
       );
+
+      if (!result) {
+        throw new NotFoundError("Note not found");
+      }
 
       logger.info(
         { userId: userId.toString(), slug },
@@ -122,11 +139,16 @@ export default class NotesService {
     }
   }
 
-  async delete(slug: string, userId: mongoose.Types.ObjectId) {
+  async delete(
+    slug: string,
+    userId: mongoose.Types.ObjectId,
+  ): Promise<NoteDocument> {
     try {
-      await this.get(slug, userId);
-
       const result = await this.repository.deleteBySlugAndUser(slug, userId);
+
+      if (!result) {
+        throw new NotFoundError("Note not found");
+      }
 
       logger.info(
         { userId: userId.toString(), slug },
@@ -144,23 +166,7 @@ export default class NotesService {
     }
   }
 
-  private async uniqueSlugByTitle(
-    title: string,
-    userId: mongoose.Types.ObjectId,
-  ): Promise<string> {
-    const baseSlug = slugify(title, {
-      lower: true,
-      strict: true,
-      trim: true,
-    });
-
-    let slug = baseSlug;
-    let counter = 1;
-
-    while (await this.repository.existsBySlugAndUser(slug, userId)) {
-      slug = `${baseSlug}-${counter++}`;
-    }
-
-    return slug;
+  private isDuplicateSlugError(err: any): boolean {
+    return err?.code === 11000 && err?.keyPattern?.slug !== undefined;
   }
 }

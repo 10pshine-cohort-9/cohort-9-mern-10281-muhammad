@@ -2,41 +2,39 @@ import mongoose from "mongoose";
 import User from "./user.model.js";
 import { CreateUserInput, UserDocument } from "./user.types.js";
 
-class UserRepository {
-  async create(data: CreateUserInput): Promise<UserDocument> {
+export default class UserRepository {
+  create = async (data: CreateUserInput): Promise<UserDocument> => {
     return User.create(data);
-  }
+  };
 
-  async findByUsername(username: string): Promise<UserDocument | null> {
+  findByUsername = async (username: string): Promise<UserDocument | null> => {
     return User.findOne({ username }).exec();
-  }
+  };
 
-  async findByEmail(email: string): Promise<UserDocument | null> {
+  findByEmail = async (email: string): Promise<UserDocument | null> => {
     return User.findOne({ email }).exec();
-  }
+  };
 
-  async findByUsernameOrEmail(
+  findByUsernameOrEmail = async (
     username: string,
     email: string,
-  ): Promise<UserDocument | null> {
+  ): Promise<UserDocument | null> => {
     return User.findOne({ $or: [{ username }, { email }] }).exec();
-  }
+  };
 
-  async findByUsernameOrEmailWithPassword(
+  findByUsernameOrEmailWithPassword = async (
     usernameOrEmail: string,
-  ): Promise<UserDocument | null> {
+  ): Promise<UserDocument | null> => {
     return User.findOne({
       $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
     })
       .select("+password")
       .exec();
-  }
+  };
 
-  async findById(id: mongoose.Types.ObjectId): Promise<UserDocument | null> {
+  findById = async (
+    id: mongoose.Types.ObjectId,
+  ): Promise<UserDocument | null> => {
     return User.findById(id);
-  }
+  };
 }
-
-const userRepository = new UserRepository();
-
-export default userRepository;

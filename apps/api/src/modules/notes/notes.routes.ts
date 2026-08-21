@@ -4,10 +4,14 @@ import { authenticate } from "../../middlewares/auth.middleware.js";
 import NotesController from "./notes.controller.js";
 import validate from "../../middlewares/validate.middleware.js";
 import { createNoteSchema, updateNoteSchema } from "./notes.schema.js";
+import NotesService from "./notes.service.js";
+import NotesRepository from "./notes.repository.js";
 
 const router = Router();
 
-const controller = new NotesController();
+const repository = new NotesRepository();
+const service = new NotesService(repository);
+const controller = new NotesController(service);
 
 router.use(authenticate);
 

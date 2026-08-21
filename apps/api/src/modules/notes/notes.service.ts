@@ -16,16 +16,12 @@ import logger from "../../config/logger.js";
 import { MongoDuplicateKeyError } from "../../types/mongo-error.types.js";
 
 export default class NotesService {
-  private repository: NotesRepository;
+  constructor(private repository: NotesRepository) {}
 
-  constructor() {
-    this.repository = new NotesRepository();
-  }
-
-  async create(
+  create = async (
     userId: mongoose.Types.ObjectId,
     data: CreateNoteInput,
-  ): Promise<NoteDocument> {
+  ): Promise<NoteDocument> => {
     const baseSlug = slugify(data.title, {
       lower: true,
       strict: true,
@@ -63,9 +59,9 @@ export default class NotesService {
     throw new ConflictError(
       "Failed to generate a unique slug after multiple attempts",
     );
-  }
+  };
 
-  async getAll(userId: mongoose.Types.ObjectId): Promise<NoteDocument[]> {
+  getAll = async (userId: mongoose.Types.ObjectId): Promise<NoteDocument[]> => {
     try {
       const notes = await this.repository.findAllByUser(userId);
 
@@ -83,12 +79,12 @@ export default class NotesService {
 
       throw error;
     }
-  }
+  };
 
-  async get(
+  get = async (
     slug: string,
     userId: mongoose.Types.ObjectId,
-  ): Promise<NoteDocument> {
+  ): Promise<NoteDocument> => {
     try {
       const note = await this.repository.findBySlugAndUser(slug, userId);
 
@@ -110,13 +106,13 @@ export default class NotesService {
 
       throw error;
     }
-  }
+  };
 
-  async update(
+  update = async (
     slug: string,
     userId: mongoose.Types.ObjectId,
     data: UpdateNoteInput,
-  ): Promise<NoteDocument> {
+  ): Promise<NoteDocument> => {
     try {
       const result = await this.repository.updateBySlugAndUser(
         slug,
@@ -142,12 +138,12 @@ export default class NotesService {
 
       throw error;
     }
-  }
+  };
 
-  async delete(
+  delete = async (
     slug: string,
     userId: mongoose.Types.ObjectId,
-  ): Promise<NoteDocument> {
+  ): Promise<NoteDocument> => {
     try {
       const result = await this.repository.deleteBySlugAndUser(slug, userId);
 
@@ -169,14 +165,16 @@ export default class NotesService {
 
       throw error;
     }
-  }
+  };
 
-  private isDuplicateSlugError(err: unknown): err is MongoDuplicateKeyError {
+  private isDuplicateSlugError = (
+    err: unknown,
+  ): err is MongoDuplicateKeyError => {
     return (
       typeof err === "object" &&
       err !== null &&
       (err as any).code === 11000 &&
       (err as any).keyPattern?.slug !== undefined
     );
-  }
+  };
 }

@@ -7,43 +7,48 @@ import {
 } from "./notes.types.js";
 
 export default class NotesRepository {
-  async create(
+  create = async (
     userId: mongoose.Types.ObjectId,
     slug: string,
     data: CreateNoteInput,
-  ): Promise<NoteDocument> {
+  ): Promise<NoteDocument> => {
     return Note.create({ userId, slug, ...data });
-  }
+  };
 
-  async findAllByUser(
+  findAllByUser = async (
     userId: mongoose.Types.ObjectId,
-  ): Promise<NoteDocument[]> {
+  ): Promise<NoteDocument[]> => {
     return Note.find({ userId });
-  }
+  };
 
-  async findByIdAndUser(
+  findByIdAndUser = async (
     id: mongoose.Types.ObjectId,
     userId: mongoose.Types.ObjectId,
-  ): Promise<NoteDocument | null> {
+  ): Promise<NoteDocument | null> => {
     return Note.findOne({ _id: id, userId });
-  }
+  };
 
-  async findBySlugAndUser(
+  findBySlugAndUser = async (
     slug: string,
     userId: mongoose.Types.ObjectId,
-  ): Promise<NoteDocument | null> {
+  ): Promise<NoteDocument | null> => {
     return Note.findOne({ slug, userId });
-  }
+  };
 
-  async updateBySlugAndUser(
+  updateBySlugAndUser = async (
     slug: string,
     userId: mongoose.Types.ObjectId,
     data: UpdateNoteInput,
-  ) {
-    return Note.findOneAndUpdate({ slug, userId }, data, { returnDocument: "after" });
-  }
+  ) => {
+    return Note.findOneAndUpdate({ slug, userId }, data, {
+      returnDocument: "after",
+    });
+  };
 
-  async deleteBySlugAndUser(slug: string, userId: mongoose.Types.ObjectId) {
+  deleteBySlugAndUser = async (
+    slug: string,
+    userId: mongoose.Types.ObjectId,
+  ) => {
     return Note.findOneAndDelete({ slug, userId });
-  }
+  };
 }

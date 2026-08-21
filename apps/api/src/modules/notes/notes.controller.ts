@@ -5,11 +5,7 @@ import { sendResponse } from "../../utils/send-response.js";
 import { CreateNoteInput, UpdateNoteInput } from "./notes.schema.js";
 
 export default class NotesController {
-  private service: NotesService;
-
-  constructor() {
-    this.service = new NotesService();
-  }
+  constructor(private service: NotesService) {}
 
   create = async (
     req: Request<{}, {}, CreateNoteInput>,

@@ -12,6 +12,8 @@ import {
 import UserRepository from "../user/user.repository.js";
 import { UserDocument } from "../user/user.types.js";
 import mongoose from "mongoose";
+import logger from "../../config/logger.js";
+import User from "../user/user.model.js";
 
 export default class AuthService {
   constructor(private repository: UserRepository) {}
@@ -22,70 +24,92 @@ export default class AuthService {
     email: string,
     password: string,
   ) => {
-    const isAlreadyRegistered = await this.repository.findByUsernameOrEmail(
-      username,
-      email,
-    );
+    try {
+      const isAlreadyRegistered = await this.repository.findByUsernameOrEmail(
+        username,
+        email,
+      );
 
-    if (isAlreadyRegistered) {
-      throw new ConflictError("Username or email already exists.");
+      if (isAlreadyRegistered) {
+        throw new ConflictError("Username or email already exists.");
+      }
+
+      const user = await this.repository.create({ username, email, password });
+
+      const accessToken = await this.issueTokens(res, user);
+
+      return { accessToken, user };
+    } catch (error) {
+      logger.error({ username, email }, "Failed to register new user");
+      throw error;
     }
-
-    const user = await this.repository.create({ username, email, password });
-
-    const accessToken = await this.issueTokens(res, user);
-
-    return { accessToken, user };
   };
 
   login = async (res: Response, usernameOrEmail: string, password: string) => {
-    const user =
-      await this.repository.findByUsernameOrEmailWithPassword(usernameOrEmail);
+    try {
+      const user =
+        await this.repository.findByUsernameOrEmailWithPassword(
+          usernameOrEmail,
+        );
 
-    if (!user) {
-      throw new UnauthorizedError("Invalid credentials");
+      if (!user) {
+        throw new UnauthorizedError("Invalid credentials");
+      }
+
+      const isValidPassword = await user.comparePassword(password);
+
+      if (!isValidPassword) {
+        throw new UnauthorizedError("Invalid credentials");
+      }
+
+      const accessToken = await this.issueTokens(res, user);
+
+      return { accessToken, user };
+    } catch (error) {
+      logger.error({ usernameOrEmail }, "Failed to login user");
+      throw error;
     }
-
-    const isValidPassword = await user.comparePassword(password);
-
-    if (!isValidPassword) {
-      throw new UnauthorizedError("Invalid credentials");
-    }
-
-    const accessToken = await this.issueTokens(res, user);
-
-    return { accessToken, user };
   };
 
   logout = async (res: Response, user: UserDocument): Promise<void> => {
-    user.refreshToken = null;
-    await user.save();
+    try {
+      user.refreshToken = null;
+      await user.save();
 
-    res.clearCookie("refreshToken", CLEAR_REFRESH_TOKEN_OPTIONS);
+      res.clearCookie("refreshToken", CLEAR_REFRESH_TOKEN_OPTIONS);
+    } catch (error) {
+      logger.error({ id: user._id }, "Failed to logout user");
+      throw error;
+    }
   };
 
   refresh = async (res: Response, refreshToken: string) => {
-    if (!refreshToken) {
-      throw new UnauthorizedError("Refresh token not found");
+    try {
+      if (!refreshToken) {
+        throw new UnauthorizedError("Refresh token not found");
+      }
+
+      const decoded = verifyRefreshToken(refreshToken);
+
+      const user = await this.repository.findById(
+        new mongoose.Types.ObjectId(decoded.id),
+      );
+
+      if (!user || !user.refreshToken) {
+        throw new UnauthorizedError("Invalid refresh token");
+      }
+
+      if (!compareRefreshToken(refreshToken, user.refreshToken)) {
+        throw new UnauthorizedError("Invalid refresh token");
+      }
+
+      const accessToken = await this.issueTokens(res, user);
+
+      return { accessToken, user };
+    } catch (error) {
+      logger.error("Failed to refresh");
+      throw error;
     }
-
-    const decoded = verifyRefreshToken(refreshToken);
-
-    const user = await this.repository.findById(
-      new mongoose.Types.ObjectId(decoded.id),
-    );
-
-    if (!user || !user.refreshToken) {
-      throw new UnauthorizedError("Invalid refresh token");
-    }
-
-    if (!compareRefreshToken(refreshToken, user.refreshToken)) {
-      throw new UnauthorizedError("Invalid refresh token");
-    }
-
-    const accessToken = await this.issueTokens(res, user);
-
-    return { accessToken, user };
   };
 
   private issueTokens = async (

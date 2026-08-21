@@ -73,11 +73,19 @@ export default class AuthController {
   }
 
   refresh = async (req: Request, res: Response): Promise<void> => {
-    const accessToken = await this.service.refresh(
+    const { accessToken, user } = await this.service.refresh(
       res,
       req.cookies.refreshToken,
     );
 
-    sendResponse(res, 200, { accessToken }, "Token refreshed successfully");
+    sendResponse(
+      res,
+      200,
+      {
+        user: { id: user._id, username: user.username, email: user.email },
+        accessToken,
+      },
+      "Token refreshed successfully",
+    );
   };
 }

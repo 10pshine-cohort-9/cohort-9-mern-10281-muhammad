@@ -10,14 +10,14 @@ export default class HealthService {
     let dbStatus: DBStatus = "down";
 
     try {
-      if (mongoose.connection.readyState === 1) {
-        dbStatus = "up";
-      } else {
-        await mongoose.connection.db?.admin().ping();
+      const conn = mongoose.connection;
+      const db = conn.db;
+
+      if (conn.readyState === 1 && db) {
+        await db.admin().ping();
         dbStatus = "up";
       }
     } catch (error) {
-      logger.error({ error }, "Error connecting to database");
       dbStatus = "down";
     }
 

@@ -40,7 +40,7 @@ export default class AuthService {
 
       return { accessToken, user };
     } catch (error) {
-      logger.error({ username, email }, "Failed to register new user");
+      logger.error({ error }, "Failed to register new user");
       throw error;
     }
   };
@@ -66,7 +66,7 @@ export default class AuthService {
 
       return { accessToken, user };
     } catch (error) {
-      logger.error({ usernameOrEmail }, "Failed to login user");
+      logger.error({ error }, "Failed to login user");
       throw error;
     }
   };
@@ -78,7 +78,7 @@ export default class AuthService {
 
       res.clearCookie("refreshToken", CLEAR_REFRESH_TOKEN_OPTIONS);
     } catch (error) {
-      logger.error({ id: user._id }, "Failed to logout user");
+      logger.error({ error }, "Failed to logout user");
       throw error;
     }
   };
@@ -107,7 +107,7 @@ export default class AuthService {
 
       return { accessToken, user };
     } catch (error) {
-      logger.error("Failed to refresh");
+      logger.error({ error }, "Failed to refresh");
       throw error;
     }
   };
@@ -116,17 +116,22 @@ export default class AuthService {
     res: Response,
     user: UserDocument,
   ): Promise<string> => {
-    const id = user._id.toString();
+    try {
+      const id = user._id.toString();
 
-    const accessToken = createAccessToken(id);
-    const refreshToken = createRefreshToken(id);
+      const accessToken = createAccessToken(id);
+      const refreshToken = createRefreshToken(id);
 
-    user.refreshToken = hashRefreshToken(refreshToken);
-    await user.save();
+      user.refreshToken = hashRefreshToken(refreshToken);
+      await user.save();
 
-    this.createRefreshTokenCookie(res, refreshToken);
+      this.createRefreshTokenCookie(res, refreshToken);
 
-    return accessToken;
+      return accessToken;
+    } catch (error) {
+      logger.error({ error }, "Failed to issue tokens");
+      throw error;
+    }
   };
 
   private createRefreshTokenCookie = (res: Response, refreshToken: string) => {

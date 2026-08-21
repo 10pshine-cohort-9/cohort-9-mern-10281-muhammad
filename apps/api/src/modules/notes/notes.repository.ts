@@ -39,7 +39,7 @@ export default class NotesRepository {
     slug: string,
     userId: mongoose.Types.ObjectId,
     data: UpdateNoteInput,
-  ) => {
+  ): Promise<NoteDocument | null> => {
     return Note.findOneAndUpdate({ slug, userId }, data, {
       returnDocument: "after",
     });
@@ -48,7 +48,7 @@ export default class NotesRepository {
   deleteBySlugAndUser = async (
     slug: string,
     userId: mongoose.Types.ObjectId,
-  ) => {
+  ): Promise<NoteDocument | null> => {
     return Note.findOneAndDelete({ slug, userId });
   };
 }

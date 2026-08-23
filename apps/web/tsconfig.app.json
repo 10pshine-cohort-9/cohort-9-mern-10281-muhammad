@@ -22,5 +22,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "src/routes/GuestRoute.tsx", "src/routes/ProtectedRoute.tsx"]
+  "include": ["src"]
 }

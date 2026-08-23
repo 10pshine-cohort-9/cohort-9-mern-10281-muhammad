@@ -1,4 +1,4 @@
-import { FileText, Plus, Search, X } from "lucide-react";
+import { FileText, Plus, Search } from "lucide-react";
 import { useState, type ReactElement } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import SearchModal from "./SearchModal";

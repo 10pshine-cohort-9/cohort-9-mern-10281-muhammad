@@ -1,11 +1,15 @@
 import { Search } from "lucide-react";
+import type { ReactElement } from "react";
 
 interface Props {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }
 
-export default function SearchModal({ isOpen, setIsOpen }: Props) {
+export default function SearchModal({
+  isOpen,
+  setIsOpen,
+}: Props): ReactElement | null {
   if (!isOpen) return null;
 
   return (
@@ -26,7 +30,9 @@ export default function SearchModal({ isOpen, setIsOpen }: Props) {
           />
         </div>
 
-        <p className="text-xs text-gray-400 px-2 py-1 text-center mb-2">In Development...</p>
+        <p className="text-xs text-gray-400 px-2 py-1 text-center mb-2">
+          In Development...
+        </p>
       </div>
     </div>
   );

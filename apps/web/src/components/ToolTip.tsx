@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactElement } from "react";
 import {
   useFloating,
   offset,
@@ -12,7 +12,7 @@ interface Props {
   children: React.ReactNode;
 }
 
-export default function Tooltip({ text, children }: Props) {
+export default function Tooltip({ text, children }: Props): ReactElement {
   const [open, setOpen] = useState(false);
 
   const { refs, floatingStyles } = useFloating({

@@ -2,7 +2,7 @@ import { FileText, Plus, Search } from "lucide-react";
 import { useState, type ReactElement } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import SearchModal from "./SearchModal";
-import Tooltip from "./ToolTip";
+import Tooltip from "./Tooltip";
 
 export default function Sidebar(): ReactElement {
   const isAuth = false;

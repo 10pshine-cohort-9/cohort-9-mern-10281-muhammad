@@ -12,6 +12,8 @@
     "test": "echo \"No tests configured yet\""
   },
   "dependencies": {
+    "@floating-ui/react": "^0.27.20",
+    "lucide-react": "^1.33.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2"

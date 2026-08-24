@@ -90,7 +90,7 @@ export default function Sidebar(): ReactElement {
                     to="/signup"
                     className="text-sm block bg-black text-white px-2 py-1 rounded text-center"
                   >
-                    Sign Up
+                    Sign up
                   </Link>
                 </li>
               </>

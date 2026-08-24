@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 export default function SignUp(): ReactElement {
   return (
     <div className="max-w-md mx-auto mt-[12vh] p-6 border rounded-lg border-gray-300">
-      <h1 className="text-xl font-semibold mb-4">Sign Up</h1>
+      <h1 className="text-xl font-semibold mb-4">Sign up</h1>
 
       <SignUpForm />
 

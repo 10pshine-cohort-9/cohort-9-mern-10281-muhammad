@@ -27,6 +27,7 @@ export default function Sidebar(): ReactElement {
                 <button
                   className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 hover:text-black text-gray-600"
                   onClick={() => navigate("/n/new")}
+                  aria-label="Create new note"
                 >
                   <Plus size={16} />
                 </button>
@@ -35,6 +36,7 @@ export default function Sidebar(): ReactElement {
                 <button
                   className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 hover:text-black text-gray-600"
                   onClick={() => setIsSearchOpen(true)}
+                  aria-label="Search notes"
                 >
                   <Search size={16} />
                 </button>

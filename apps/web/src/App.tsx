@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, type ReactElement } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import Loading from "./components/Loading";
@@ -15,7 +15,7 @@ const NoteView = lazy(() => import("./pages/notes/NoteView"));
 const NoteEdit = lazy(() => import("./pages/notes/NoteEdit"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-export default function App() {
+export default function App(): ReactElement {
   return (
     <Suspense fallback={<Loading />}>
       <Routes>

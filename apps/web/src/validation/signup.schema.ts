@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { passwordSchema } from "./login.schema";
 
 export const signUpSchema = z
   .object({
@@ -9,7 +10,7 @@ export const signUpSchema = z
       .min(3, "Must be at least 3 characters")
       .max(30, "Must not exceed 30 characters"),
     email: z.email().trim().toLowerCase(),
-    password: z.string().min(8, "Must be at least 8 characters"),
+    password: passwordSchema,
     confirmPassword: z.string().min(1, "Confirm your password"),
   })
   .refine((data) => data.password === data.confirmPassword, {

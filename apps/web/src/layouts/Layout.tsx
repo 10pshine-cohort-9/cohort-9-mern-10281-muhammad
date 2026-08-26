@@ -7,9 +7,9 @@ export default function Layout(): ReactElement {
     <div className="min-h-screen">
       <Sidebar />
 
-      <main className="ml-72 h-screen overflow-auto p-4">
+      <div className="ml-72 h-screen overflow-auto">
         <Outlet />
-      </main>
+      </div>
     </div>
   );
 }

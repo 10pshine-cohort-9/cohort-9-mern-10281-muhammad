@@ -78,8 +78,8 @@ export function verifyRefreshToken(token: string): TokenPayload {
 
 const OPTIONS: CookieOptions = {
   httpOnly: true,
-  secure: true,
-  sameSite: "strict",
+  secure: false,
+  sameSite: "lax",
 };
 
 export const REFRESH_TOKEN_OPTIONS: CookieOptions = {

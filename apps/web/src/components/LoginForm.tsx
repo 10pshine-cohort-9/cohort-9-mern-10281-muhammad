@@ -1,76 +1,95 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, type LoginSchema } from "../validation/login.schema";
-import type { ReactElement } from "react";
+import { loginSchema, type LoginInput } from "../validation/auth.validation";
+import { useState, type ReactElement } from "react";
+import { useAuthStore } from "../store/auth.store";
+import { authService } from "../services/auth.service";
 
 export default function LoginForm(): ReactElement {
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<LoginSchema>({
+  } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     mode: "onBlur",
   });
 
-  const onSubmit = async (data: LoginSchema) => {
-    try {
-      console.log("Login data:", data);
+  const [error, setError] = useState("");
 
-      await new Promise((res) => setTimeout(res, 1000));
-    } catch (err) {
-      console.error(err);
+  const setAuth = useAuthStore((s) => s.setAuth);
+
+  const onSubmit = async (data: LoginInput) => {
+    try {
+      setError("");
+      const { accessToken, user } = await authService.login(data);
+      setAuth(accessToken, user);
+    } catch (error: any) {
+      setError(error?.response?.data?.message || "Login failed");
     }
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate>
-      <div className="mb-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+      {error && (
+        <div className="p-3 text-sm text-center text-red-700 bg-red-50 border border-red-200 rounded-md">
+          {error}
+        </div>
+      )}
+
+      <div className="space-y-1">
         <label
           htmlFor="usernameOrEmail"
-          className="block mb-1 text-xs font-medium cursor-pointer"
+          className="text-xs font-medium text-gray-700"
         >
-          Username or Email Address
+          Username or Email
         </label>
 
         <input
           id="usernameOrEmail"
           type="text"
-          className="w-full border border-gray-300 p-2 rounded"
+          className={`w-full px-3 py-2 border rounded-md text-sm outline-none transition
+            ${
+              errors.usernameOrEmail
+                ? "border-red-400 focus:ring-red-200 focus:ring-2"
+                : "border-gray-300 focus:ring-2 focus:ring-black/10 focus:border-black"
+            }`}
           {...register("usernameOrEmail")}
         />
 
         {errors.usernameOrEmail && (
-          <p className="text-red-500 text-sm mt-1">
+          <p className="text-xs text-red-500">
             {errors.usernameOrEmail.message}
           </p>
         )}
       </div>
 
-      <div className="mb-4">
-        <label
-          htmlFor="password"
-          className="block mb-1 text-xs cursor-pointer font-medium"
-        >
+      <div className="space-y-1">
+        <label htmlFor="password" className="text-xs font-medium text-gray-700">
           Password
         </label>
 
         <input
           id="password"
           type="password"
-          className="w-full border border-gray-300 p-2 rounded"
+          className={`w-full px-3 py-2 border rounded-md text-sm outline-none transition
+            ${
+              errors.password
+                ? "border-red-400 focus:ring-red-200 focus:ring-2"
+                : "border-gray-300 focus:ring-2 focus:ring-black/10 focus:border-black"
+            }`}
           {...register("password")}
         />
 
         {errors.password && (
-          <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
+          <p className="text-xs text-red-500">{errors.password.message}</p>
         )}
       </div>
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full bg-black text-white p-2 rounded disabled:bg-black-80 hover:bg-black/90"
+        className="w-full py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-black/90 transition disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {isSubmitting ? "Logging in..." : "Login"}
       </button>

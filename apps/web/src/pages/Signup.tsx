@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import SignUpForm from "../components/SignUpForm";
+import SignupForm from "../components/SignupForm";
 import { Link } from "react-router-dom";
 
 export default function SignUp(): ReactElement {
@@ -7,7 +7,7 @@ export default function SignUp(): ReactElement {
     <div className="max-w-md mx-auto mt-[12vh] p-6 border rounded-lg border-gray-300">
       <h1 className="text-xl font-semibold mb-4">Sign up</h1>
 
-      <SignUpForm />
+      <SignupForm />
 
       <p className="text-center text-sm mt-4">
         Already have an account?{" "}

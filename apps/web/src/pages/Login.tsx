@@ -12,7 +12,7 @@ export default function Login(): ReactElement {
       <p className="text-center text-sm mt-4">
         Don't have an account?{" "}
         <Link to="/signup" className="border-b">
-          Sign Up
+          Sign up
         </Link>
       </p>
     </div>

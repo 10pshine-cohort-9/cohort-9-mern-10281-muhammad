@@ -158,17 +158,14 @@ export default function Profile(): ReactElement {
       </div>
 
       <ConfirmModal
-        open={deleteSlug !== null}
-        title="Delete note?"
-        message="Are you sure you want to delete this note? This action cannot be undone."
-        confirmText="Delete"
-        loading={deleting}
-        onConfirm={handleDelete}
-        onCancel={() => {
-          if (!deleting) {
+        isOpen={deleteSlug !== null}
+        setIsOpen={(isOpen) => {
+          if (!isOpen && !deleting) {
             setDeleteSlug(null);
           }
         }}
+        loading={deleting}
+        onConfirm={handleDelete}
       />
     </>
   );

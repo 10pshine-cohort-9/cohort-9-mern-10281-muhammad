@@ -141,17 +141,10 @@ export default function NoteView(): ReactElement {
       </div>
 
       <ConfirmModal
-        open={deleteOpen}
-        title="Delete note?"
-        message="Are you sure you want to delete this note? This action cannot be undone."
-        confirmText="Delete"
+        isOpen={deleteOpen}
+        setIsOpen={setDeleteOpen}
         loading={deleting}
         onConfirm={handleDelete}
-        onCancel={() => {
-          if (!deleting) {
-            setDeleteOpen(false);
-          }
-        }}
       />
     </>
   );

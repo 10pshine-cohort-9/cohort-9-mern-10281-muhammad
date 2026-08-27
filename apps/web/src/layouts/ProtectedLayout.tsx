@@ -7,7 +7,7 @@ export default function ProtectedLayout(): ReactElement {
     <div>
       <TopBar />
 
-      <main className="p-4">
+      <main className="max-w-3xl mx-auto space-y-8 py-6">
         <Outlet />
       </main>
     </div>

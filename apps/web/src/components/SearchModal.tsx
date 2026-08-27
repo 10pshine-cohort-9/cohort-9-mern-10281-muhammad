@@ -11,6 +11,8 @@ export default function SearchModal({
   setIsOpen,
 }: Props): ReactElement | null {
   const inputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedElement = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -41,14 +43,40 @@ export default function SearchModal({
   useEffect(() => {
     if (!isOpen) return;
 
-    const handleEscape = (e: KeyboardEvent) => {
+    previouslyFocusedElement.current = document.activeElement as HTMLElement;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setIsOpen(false);
+        return;
+      }
+
+      if (e.key === "Tab") {
+        const focusable = modalRef.current?.querySelectorAll<HTMLElement>(
+          'a[href], button, textarea, input, select, [tabindex]:not([tabindex="-1"])',
+        );
+
+        if (!focusable || focusable.length === 0) return;
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
       }
     };
 
-    window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, setIsOpen]);
 
   useEffect(() => {
@@ -56,6 +84,12 @@ export default function SearchModal({
       setTimeout(() => {
         inputRef.current?.focus();
       }, 0);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen && previouslyFocusedElement.current) {
+      previouslyFocusedElement.current.focus();
     }
   }, [isOpen]);
 
@@ -70,6 +104,7 @@ export default function SearchModal({
       onClick={() => setIsOpen(false)}
     >
       <div
+        ref={modalRef}
         className="w-full max-w-md bg-white rounded-xl border border-gray-300 shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
@@ -83,7 +118,7 @@ export default function SearchModal({
             ref={inputRef}
             aria-label="Search notes"
             placeholder="Search notes..."
-            className="w-full px-3 py-2 rounded-lg focus:outline-none"
+            className="w-full px-3 py-2 focus:outline-none"
           />
         </div>
 
@@ -91,12 +126,12 @@ export default function SearchModal({
           In Development...
         </p>
 
-        <div className="flex text-xs text-gray-500 px-4 py-2 border-t border-gray-300">
+        <div className="flex text-xs text-gray-500 px-4 py-2 border-t border-gray-300 justify-between">
           <span>
             <kbd className="px-1 border rounded">Ctrl</kbd> +{" "}
             <kbd className="px-1 border rounded">K</kbd>
           </span>
-          <span className="border-x px-4 mx-4 border-gray-300">
+          <span>
             <kbd className="px-1 border rounded">/</kbd>
           </span>
           <span>

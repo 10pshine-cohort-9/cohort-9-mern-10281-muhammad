@@ -1,8 +1,4 @@
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import TextAlign from "@tiptap/extension-text-align";
-import { useEffect } from "react";
-
+import { Fragment, useEffect } from "react";
 import {
   Bold,
   Italic,
@@ -17,7 +13,11 @@ import {
   Undo,
   Redo,
   Trash2,
+  type LucideIcon,
 } from "lucide-react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import TextAlign from "@tiptap/extension-text-align";
 
 import Tooltip from "../components/Tooltip";
 
@@ -26,31 +26,35 @@ type Props = {
   onChange: (value: string) => void;
 };
 
+type ToolButtonConfig = {
+  label: string;
+  icon: LucideIcon;
+  onClick: () => void;
+  active?: boolean;
+  shortcut?: string;
+  separator?: boolean;
+};
+
 function ToolButton({
   onClick,
   active,
-  children,
+  icon: Icon,
   label,
   shortcut,
-}: {
-  onClick: () => void;
-  active?: boolean;
-  children: React.ReactNode;
-  label: string;
-  shortcut?: string;
-}) {
+}: ToolButtonConfig) {
   return (
     <Tooltip text={`${label}${shortcut ? ` (${shortcut})` : ""}`}>
       <button
         type="button"
         onClick={onClick}
+        aria-label={label}
         className={[
           "p-1.5 rounded-md transition",
           "hover:bg-gray-200",
           active ? "bg-gray-200 text-black" : "text-gray-600",
         ].join(" ")}
       >
-        {children}
+        <Icon size={16} />
       </button>
     </Tooltip>
   );
@@ -62,15 +66,10 @@ export default function RichEditor({ value, onChange }: Props) {
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
       }),
-    //   Underline,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
     ],
     content: value,
-
-    onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
-    },
-
+    onUpdate: ({ editor }) => onChange(editor.getHTML()),
     editorProps: {
       attributes: {
         class: [
@@ -80,8 +79,6 @@ export default function RichEditor({ value, onChange }: Props) {
           "text-sm text-gray-900",
           "focus:outline-none",
           "leading-normal",
-
-          // 🔥 FIX SPACING PROBLEMS
           "[&>p]:my-1",
           "[&>h1]:my-2",
           "[&>h2]:my-2",
@@ -96,137 +93,108 @@ export default function RichEditor({ value, onChange }: Props) {
     if (editor && value !== editor.getHTML()) {
       editor.commands.setContent(value, false);
     }
-  }, [value]);
+  }, [value, editor]);
 
   if (!editor) return null;
 
+  const buttons: ToolButtonConfig[] = [
+    {
+      label: "Undo",
+      shortcut: "Ctrl+Z",
+      icon: Undo,
+      onClick: () => editor.chain().focus().undo().run(),
+    },
+    {
+      label: "Redo",
+      shortcut: "Ctrl+Y",
+      icon: Redo,
+      onClick: () => editor.chain().focus().redo().run(),
+      separator: true,
+    },
+    {
+      label: "H1",
+      icon: Heading1,
+      onClick: () => editor.chain().focus().toggleHeading({ level: 1 }).run(),
+      active: editor.isActive("heading", { level: 1 }),
+    },
+    {
+      label: "H2",
+      icon: Heading2,
+      onClick: () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
+      active: editor.isActive("heading", { level: 2 }),
+      separator: true,
+    },
+    {
+      label: "Bold",
+      shortcut: "Ctrl+B",
+      icon: Bold,
+      onClick: () => editor.chain().focus().toggleBold().run(),
+      active: editor.isActive("bold"),
+    },
+    {
+      label: "Italic",
+      shortcut: "Ctrl+I",
+      icon: Italic,
+      onClick: () => editor.chain().focus().toggleItalic().run(),
+      active: editor.isActive("italic"),
+    },
+    {
+      label: "Underline",
+      icon: UnderlineIcon,
+      onClick: () => editor.chain().focus().toggleUnderline().run(),
+      active: editor.isActive("underline"),
+    },
+    {
+      label: "Strike",
+      icon: Strikethrough,
+      onClick: () => editor.chain().focus().toggleStrike().run(),
+      active: editor.isActive("strike"),
+      separator: true,
+    },
+    {
+      label: "Bullet List",
+      icon: List,
+      onClick: () => editor.chain().focus().toggleBulletList().run(),
+      active: editor.isActive("bulletList"),
+    },
+    {
+      label: "Numbered List",
+      icon: ListOrdered,
+      onClick: () => editor.chain().focus().toggleOrderedList().run(),
+      active: editor.isActive("orderedList"),
+      separator: true,
+    },
+    {
+      label: "Quote",
+      icon: Quote,
+      onClick: () => editor.chain().focus().toggleBlockquote().run(),
+      active: editor.isActive("blockquote"),
+    },
+    {
+      label: "Code",
+      icon: Code,
+      onClick: () => editor.chain().focus().toggleCodeBlock().run(),
+      active: editor.isActive("codeBlock"),
+      separator: true,
+    },
+    {
+      label: "Clear",
+      icon: Trash2,
+      onClick: () => editor.chain().focus().clearNodes().unsetAllMarks().run(),
+    },
+  ];
+
   return (
     <div className="bg-white">
-      {/* TOOLBAR */}
       <div className="flex flex-wrap items-center gap-1 px-2 py-1 border-b border-gray-200 bg-gray-50">
-        <ToolButton
-          label="Undo"
-          shortcut="Ctrl+Z"
-          onClick={() => editor.chain().focus().undo().run()}
-        >
-          <Undo size={16} />
-        </ToolButton>
-
-        <ToolButton
-          label="Redo"
-          shortcut="Ctrl+Y"
-          onClick={() => editor.chain().focus().redo().run()}
-        >
-          <Redo size={16} />
-        </ToolButton>
-
-        <div className="w-px h-5 bg-gray-300 mx-1" />
-
-        <ToolButton
-          label="H1"
-          onClick={() =>
-            editor.chain().focus().toggleHeading({ level: 1 }).run()
-          }
-          active={editor.isActive("heading", { level: 1 })}
-        >
-          <Heading1 size={16} />
-        </ToolButton>
-
-        <ToolButton
-          label="H2"
-          onClick={() =>
-            editor.chain().focus().toggleHeading({ level: 2 }).run()
-          }
-          active={editor.isActive("heading", { level: 2 })}
-        >
-          <Heading2 size={16} />
-        </ToolButton>
-
-        <div className="w-px h-5 bg-gray-300 mx-1" />
-
-        <ToolButton
-          label="Bold"
-          shortcut="Ctrl+B"
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          active={editor.isActive("bold")}
-        >
-          <Bold size={16} />
-        </ToolButton>
-
-        <ToolButton
-          label="Italic"
-          shortcut="Ctrl+I"
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          active={editor.isActive("italic")}
-        >
-          <Italic size={16} />
-        </ToolButton>
-
-        <ToolButton
-          label="Underline"
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-          active={editor.isActive("underline")}
-        >
-          <UnderlineIcon size={16} />
-        </ToolButton>
-
-        <ToolButton
-          label="Strike"
-          onClick={() => editor.chain().focus().toggleStrike().run()}
-          active={editor.isActive("strike")}
-        >
-          <Strikethrough size={16} />
-        </ToolButton>
-
-        <div className="w-px h-5 bg-gray-300 mx-1" />
-
-        <ToolButton
-          label="Bullet List"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          active={editor.isActive("bulletList")}
-        >
-          <List size={16} />
-        </ToolButton>
-
-        <ToolButton
-          label="Numbered List"
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          active={editor.isActive("orderedList")}
-        >
-          <ListOrdered size={16} />
-        </ToolButton>
-
-        <div className="w-px h-5 bg-gray-300 mx-1" />
-
-        <ToolButton
-          label="Quote"
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          active={editor.isActive("blockquote")}
-        >
-          <Quote size={16} />
-        </ToolButton>
-
-        <ToolButton
-          label="Code"
-          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-          active={editor.isActive("codeBlock")}
-        >
-          <Code size={16} />
-        </ToolButton>
-
-        <div className="w-px h-5 bg-gray-300 mx-1" />
-
-        <ToolButton
-          label="Clear"
-          onClick={() =>
-            editor.chain().focus().clearNodes().unsetAllMarks().run()
-          }
-        >
-          <Trash2 size={16} />
-        </ToolButton>
+        {buttons.map((button) => (
+          <Fragment key={button.label}>
+            <ToolButton {...button} />
+            {button.separator && <div className="w-px h-5 mx-1 bg-gray-300" />}
+          </Fragment>
+        ))}
       </div>
 
-      {/* EDITOR */}
       <EditorContent editor={editor} />
     </div>
   );

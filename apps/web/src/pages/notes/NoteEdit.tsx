@@ -1,12 +1,12 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState, type ReactElement } from "react";
+import { useForm } from "react-hook-form";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-
+import NotFound from "../NotFound";
+import PageHeader from "../../components/PageHeader";
 import RichEditor from "../../components/RichEditor";
 import { useNotesStore } from "../../store/notes.store";
-
 import {
   updateNoteSchema,
   type UpdateNoteInput,
@@ -38,7 +38,6 @@ export default function NoteEdit(): ReactElement {
     },
   });
 
-  // Load existing note
   useEffect(() => {
     if (!note) return;
 
@@ -62,27 +61,20 @@ export default function NoteEdit(): ReactElement {
   };
 
   if (!note) {
-    return (
-      <div className="max-w-3xl mx-auto py-6">
-        <div className="border border-gray-300 rounded-md p-4 text-sm text-gray-500">
-          Note not found.
-        </div>
-      </div>
-    );
+    return <NotFound message="The note you are looking for does not exist." />;
   }
 
   const saving = isSubmitting || loading;
 
   return (
-    <div className="max-w-3xl mx-auto py-6">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="flex items-center justify-between border-b border-gray-300 pb-4">
-          <h1 className="text-xl font-semibold">Edit Note</h1>
+    <>
+      <PageHeader>
+        <h1 className="text-xl font-semibold">Edit Note</h1>
 
-          <div className="flex items-center gap-2">
-            <Link
-              to={`/n/${note.slug}`}
-              className="
+        <div className="flex items-center gap-2">
+          <Link
+            to={`/n/${note.slug}`}
+            className="
                 px-4 py-2
                 text-sm
                 rounded-md
@@ -90,14 +82,14 @@ export default function NoteEdit(): ReactElement {
                 hover:bg-gray-50
                 transition
               "
-            >
-              Cancel
-            </Link>
+          >
+            Cancel
+          </Link>
 
-            <button
-              type="submit"
-              disabled={saving}
-              className="
+          <button
+            type="submit"
+            disabled={saving}
+            className="
                 px-4 py-2
                 text-sm
                 bg-black
@@ -107,12 +99,13 @@ export default function NoteEdit(): ReactElement {
                 transition
                 disabled:opacity-50
               "
-            >
-              {saving ? "Saving..." : "Update"}
-            </button>
-          </div>
+          >
+            {saving ? "Saving..." : "Update"}
+          </button>
         </div>
+      </PageHeader>
 
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-1">
           <input
             type="text"
@@ -152,6 +145,6 @@ export default function NoteEdit(): ReactElement {
           <p className="text-xs text-red-500">{errors.content.message}</p>
         )}
       </form>
-    </div>
+    </>
   );
 }

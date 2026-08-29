@@ -1,10 +1,12 @@
+import { ArrowLeft, Edit2, Trash2 } from "lucide-react";
 import { useEffect, useState, type ReactElement } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Edit2, Trash2 } from "lucide-react";
 
-import { useNotesStore } from "../../store/notes.store";
-import Tooltip from "../../components/Tooltip";
+import NotFound from "../NotFound";
 import ConfirmModal from "../../components/ConfirmModal";
+import PageHeader from "../../components/PageHeader";
+import Tooltip from "../../components/Tooltip";
+import { useNotesStore } from "../../store/notes.store";
 import { formatDate } from "../../utils/formatDate";
 
 export default function NoteView(): ReactElement {
@@ -52,38 +54,31 @@ export default function NoteView(): ReactElement {
   }
 
   if (!note) {
-    return (
-      <div className="max-w-3xl mx-auto py-6">
-        <div className="border border-gray-300 rounded-md p-4 text-sm text-gray-500">
-          Note not found.
-        </div>
-      </div>
-    );
+    return <NotFound message="The note you are looking for does not exist." />;
   }
 
   return (
     <>
-      <div className="max-w-3xl mx-auto py-6 space-y-6">
-        <div className="flex items-center justify-between border-b border-gray-300 pb-4">
-          <Link
-            to="/"
-            className="
+      <PageHeader>
+        <Link
+          to="/"
+          className="
               flex items-center gap-1.5
               text-sm
               text-gray-600
               hover:text-black
               transition
             "
-          >
-            <ArrowLeft size={16} />
-            Back
-          </Link>
+        >
+          <ArrowLeft size={16} />
+          Back
+        </Link>
 
-          <div className="flex items-center gap-1">
-            <Tooltip text="Edit">
-              <Link
-                to={`/n/${note.slug}/edit`}
-                className="
+        <div className="flex items-center gap-1">
+          <Tooltip text="Edit">
+            <Link
+              to={`/n/${note.slug}/edit`}
+              className="
                   flex items-center justify-center
                   w-8 h-8
                   rounded-md
@@ -91,16 +86,16 @@ export default function NoteView(): ReactElement {
                   hover:bg-gray-100
                   transition
                 "
-              >
-                <Edit2 size={16} />
-              </Link>
-            </Tooltip>
+            >
+              <Edit2 size={16} />
+            </Link>
+          </Tooltip>
 
-            <Tooltip text="Delete">
-              <button
-                type="button"
-                onClick={() => setDeleteOpen(true)}
-                className="
+          <Tooltip text="Delete">
+            <button
+              type="button"
+              onClick={() => setDeleteOpen(true)}
+              className="
                   flex items-center justify-center
                   w-8 h-8
                   rounded-md
@@ -108,25 +103,25 @@ export default function NoteView(): ReactElement {
                   hover:bg-red-50
                   transition
                 "
-              >
-                <Trash2 size={16} />
-              </button>
-            </Tooltip>
-          </div>
+            >
+              <Trash2 size={16} />
+            </button>
+          </Tooltip>
         </div>
+      </PageHeader>
 
-        <div className="space-y-2">
-          <h1 className="text-2xl font-semibold text-gray-900">
-            {note.title || "Untitled"}
-          </h1>
+      <div className="space-y-2">
+        <h1 className="text-2xl font-semibold text-gray-900">
+          {note.title || "Untitled"}
+        </h1>
 
-          <p className="text-xs text-gray-400">
-            Last updated: {formatDate(note.updatedAt)}
-          </p>
-        </div>
+        <p className="text-xs text-gray-400">
+          Last updated: {formatDate(note.updatedAt)}
+        </p>
+      </div>
 
-        <div
-          className="
+      <div
+        className="
             prose prose-sm max-w-none
             prose-headings:text-gray-900
             prose-p:text-gray-700
@@ -134,11 +129,10 @@ export default function NoteView(): ReactElement {
             prose-li:text-gray-700
             leading-relaxed
           "
-          dangerouslySetInnerHTML={{
-            __html: note.content || "",
-          }}
-        />
-      </div>
+        dangerouslySetInnerHTML={{
+          __html: note.content || "",
+        }}
+      />
 
       <ConfirmModal
         isOpen={deleteOpen}

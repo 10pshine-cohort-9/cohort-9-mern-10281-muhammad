@@ -1,6 +1,7 @@
-import { FileText, Plus, Search } from "lucide-react";
 import { useState, type ReactElement } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { FileText, Plus, Search } from "lucide-react";
+
 import SearchModal from "./SearchModal";
 import Tooltip from "./Tooltip";
 import { useAuthStore } from "../store/auth.store";
@@ -72,7 +73,7 @@ export default function Sidebar(): ReactElement {
               <img
                 src={`https://api.dicebear.com/10.x/lorelei/svg?seed=${user.id}`}
                 alt={`${user.username} avatar`}
-                className="w-8 h-8 rounded-full border"
+                className="w-8 h-8 rounded-full border border-gray-300"
               />
 
               <div className="flex flex-col text-sm leading-tight">

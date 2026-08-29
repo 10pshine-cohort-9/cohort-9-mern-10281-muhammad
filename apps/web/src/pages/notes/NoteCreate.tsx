@@ -1,16 +1,15 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, type ReactElement } from "react";
+import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-
+import PageHeader from "../../components/PageHeader";
+import RichEditor from "../../components/RichEditor";
+import { useNotesStore } from "../../store/notes.store";
 import {
   createNoteSchema,
   type CreateNoteInput,
 } from "../../validation/notes.validation";
-
-import { useNotesStore } from "../../store/notes.store";
-import RichEditor from "../../components/RichEditor";
 
 export default function NoteCreate(): ReactElement {
   const createNote = useNotesStore((s) => s.createNote);
@@ -49,15 +48,14 @@ export default function NoteCreate(): ReactElement {
   const saving = isSubmitting || loading;
 
   return (
-    <div className="max-w-3xl mx-auto py-6">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="flex items-center justify-between border-b border-gray-300 pb-4">
-          <h1 className="text-xl font-semibold">New Note</h1>
+    <>
+      <PageHeader>
+        <h1 className="text-xl font-semibold">New Note</h1>
 
-          <div className="flex items-center gap-2">
-            <Link
-              to="/"
-              className="
+        <div className="flex items-center gap-2">
+          <Link
+            to="/"
+            className="
                 px-4 py-2
                 text-sm
                 rounded-md
@@ -65,14 +63,14 @@ export default function NoteCreate(): ReactElement {
                 hover:bg-gray-50
                 transition
               "
-            >
-              Cancel
-            </Link>
+          >
+            Cancel
+          </Link>
 
-            <button
-              type="submit"
-              disabled={saving}
-              className="
+          <button
+            type="submit"
+            disabled={saving}
+            className="
                 px-4 py-2
                 text-sm
                 bg-black
@@ -82,12 +80,12 @@ export default function NoteCreate(): ReactElement {
                 transition
                 disabled:opacity-50
               "
-            >
-              {saving ? "Saving..." : "Save"}
-            </button>
-          </div>
+          >
+            {saving ? "Saving..." : "Save"}
+          </button>
         </div>
-
+      </PageHeader>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-1">
           <input
             type="text"
@@ -127,6 +125,6 @@ export default function NoteCreate(): ReactElement {
           <p className="text-xs text-red-500">{errors.content.message}</p>
         )}
       </form>
-    </div>
+    </>
   );
 }

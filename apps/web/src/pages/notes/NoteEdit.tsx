@@ -11,6 +11,7 @@ import {
   updateNoteSchema,
   type UpdateNoteInput,
 } from "../../validation/notes.validation";
+import FormField from "../../components/FormField";
 
 export default function NoteEdit(): ReactElement {
   const { slug } = useParams();
@@ -88,6 +89,7 @@ export default function NoteEdit(): ReactElement {
 
           <button
             type="submit"
+            form="note-edit-form"
             disabled={saving}
             className="
                 px-4 py-2
@@ -105,27 +107,18 @@ export default function NoteEdit(): ReactElement {
         </div>
       </PageHeader>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="space-y-1">
-          <input
-            type="text"
-            placeholder="Untitled note"
-            className="
-              w-full
-              text-2xl
-              font-semibold
-              border-none
-              outline-none
-              placeholder:text-gray-300
-              bg-transparent
-            "
-            {...register("title")}
-          />
-
-          {errors.title && (
-            <p className="text-xs text-red-500">{errors.title.message}</p>
-          )}
-        </div>
+      <form
+        id="note-edit-form"
+        onSubmit={handleSubmit(onSubmit)}
+        className="space-y-6"
+      >
+        <FormField
+          placeholder="Untitled note"
+          className="w-full text-2xl font-semibold border-none outline-none focus:outline-none focus:ring-0 placeholder:text-gray-300 bg-transparent px-0"
+          type="text"
+          registration={register("title")}
+          error={errors.title?.message}
+        />
 
         <div className="border border-gray-300 rounded-md bg-white overflow-hidden">
           <RichEditor

@@ -36,7 +36,6 @@ export default function NoteView(): ReactElement {
       setDeleting(true);
 
       await deleteNote(note.slug);
-      await getNotes();
 
       setDeleteOpen(false);
       navigate("/");
@@ -78,6 +77,7 @@ export default function NoteView(): ReactElement {
           <Tooltip text="Edit">
             <Link
               to={`/n/${note.slug}/edit`}
+              aria-label="Edit note"
               className="
                   flex items-center justify-center
                   w-8 h-8
@@ -94,6 +94,7 @@ export default function NoteView(): ReactElement {
           <Tooltip text="Delete">
             <button
               type="button"
+              aria-label="Delete note"
               onClick={() => setDeleteOpen(true)}
               className="
                   flex items-center justify-center
@@ -116,7 +117,7 @@ export default function NoteView(): ReactElement {
         </h1>
 
         <p className="text-xs text-gray-400">
-          Last updated: {formatDate(note.updatedAt)}
+          Updated {formatDate(note.updatedAt) || "recently"}
         </p>
       </div>
 

@@ -101,41 +101,64 @@ export default function Profile(): ReactElement {
         )}
 
         {!loading && notes.length > 0 && (
-          <div className="border border-gray-300 rounded-lg overflow-hidden bg-white">
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-gray-600">
-                <tr>
-                  <th className="px-4 py-3">Title</th>
-                  <th className="px-4 py-3">Preview</th>
-                  <th className="px-4 py-3 w-32 text-right">Actions</th>
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-50">
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">
+                    Title
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">
+                    Preview
+                  </th>
+                  <th className="w-28 px-4 py-3 text-right font-medium text-gray-500">
+                    Actions
+                  </th>
                 </tr>
               </thead>
 
-              <tbody>
+              <tbody className="divide-y divide-gray-100">
                 {notes.map((note) => (
                   <tr
                     key={note.slug}
-                    className="border-t border-gray-300 hover:bg-gray-50 transition"
+                    className="group transition-colors hover:bg-gray-50"
                   >
-                    <td className="px-4 py-2 font-medium text-gray-900">
-                      {note.title || "Untitled"}
+                    <td className="px-4 py-3.5">
+                      <Link
+                        to={`/n/${note.slug}`}
+                        className="
+                  font-medium
+                  text-gray-900
+                  hover:text-black
+                  transition-colors
+                "
+                      >
+                        {note.title || "Untitled"}
+                      </Link>
                     </td>
 
-                    <td className="px-4 py-2 text-gray-500">
-                      <span className="line-clamp-1">
-                        {stripHtml(note.content).slice(0, 80)}
-                      </span>
+                    <td className="max-w-0 px-4 py-3.5">
+                      <p className="truncate text-gray-500">
+                        {stripHtml(note.content).slice(0, 100) || "No content"}
+                      </p>
                     </td>
 
-                    <td className="px-4 py-2">
-                      <div className="flex justify-end items-center gap-1">
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center justify-end gap-1">
                         <Tooltip text="View">
                           <Link
                             to={`/n/${note.slug}`}
                             aria-label="View note"
-                            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 text-gray-700 transition"
+                            className="
+                      flex h-8 w-8 items-center justify-center
+                      rounded-md
+                      text-gray-500
+                      hover:bg-gray-100
+                      hover:text-gray-900
+                      transition
+                    "
                           >
-                            <Eye size={16} />
+                            <Eye size={15} />
                           </Link>
                         </Tooltip>
 
@@ -143,9 +166,16 @@ export default function Profile(): ReactElement {
                           <Link
                             to={`/n/${note.slug}/edit`}
                             aria-label="Edit note"
-                            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 text-gray-700 transition"
+                            className="
+                      flex h-8 w-8 items-center justify-center
+                      rounded-md
+                      text-gray-500
+                      hover:bg-gray-100
+                      hover:text-gray-900
+                      transition
+                    "
                           >
-                            <Pencil size={16} />
+                            <Pencil size={15} />
                           </Link>
                         </Tooltip>
 
@@ -154,9 +184,16 @@ export default function Profile(): ReactElement {
                             type="button"
                             onClick={() => setDeleteSlug(note.slug)}
                             aria-label="Delete note"
-                            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-red-50 text-red-600 transition"
+                            className="
+                      flex h-8 w-8 items-center justify-center
+                      rounded-md
+                      text-gray-400
+                      hover:bg-red-50
+                      hover:text-red-600
+                      transition
+                    "
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={15} />
                           </button>
                         </Tooltip>
                       </div>

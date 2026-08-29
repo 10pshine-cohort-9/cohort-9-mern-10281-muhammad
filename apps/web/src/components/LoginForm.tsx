@@ -4,6 +4,7 @@ import { loginSchema, type LoginInput } from "../validation/auth.validation";
 import { useState, type ReactElement } from "react";
 import { useAuthStore } from "../store/auth.store";
 import { authService } from "../services/auth.service";
+import axios from "axios";
 
 export default function LoginForm(): ReactElement {
   const {
@@ -24,8 +25,11 @@ export default function LoginForm(): ReactElement {
       setError("");
       const { accessToken, user } = await authService.login(data);
       setAuth(accessToken, user);
-    } catch (error: any) {
-      setError(error?.response?.data?.message || "Login failed");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        setError(error?.response?.data?.message || "Login failed");
+      }
+      setError("An unexpected error occurred");
     }
   };
 

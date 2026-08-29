@@ -22,6 +22,10 @@ export async function authenticate(
 
   const decoded = verifyAccessToken(token);
 
+  if (!mongoose.isValidObjectId(decoded.id)) {
+    throw new UnauthorizedError("Invalid authentication token");
+  }
+
   const user = await userRepository.findById(
     new mongoose.Types.ObjectId(decoded.id),
   );

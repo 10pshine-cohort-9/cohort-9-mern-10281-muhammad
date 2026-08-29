@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/auth.store";
 import { authService } from "../services/auth.service";
+import axios from "axios";
 
 export default function Profile(): ReactElement {
   const navigate = useNavigate();
@@ -12,10 +13,15 @@ export default function Profile(): ReactElement {
   const handleLogout = async () => {
     try {
       await authService.logout();
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        console.error(error.response?.data?.message ?? "Logout request failed");
+      } else {
+        console.error("An unexpected error occurred");
+      }
+    } finally {
       logout();
       navigate("/login");
-    } catch (error: any) {
-      console.log(error.response.data.message);
     }
   };
 

@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useMemo } from "react";
 import { FileText, Home, Plus, User } from "lucide-react";
-import type { ElementType } from "react";
+import type { ElementType, ReactElement } from "react";
 
 export type Route = { label: string; icon?: ElementType };
 
@@ -12,7 +12,7 @@ export const routeMeta: Record<string, Route> = {
   new: { label: "New note", icon: Plus },
 };
 
-export default function TopBar() {
+export default function TopBar(): ReactElement {
   const location = useLocation();
 
   const paths = useMemo(

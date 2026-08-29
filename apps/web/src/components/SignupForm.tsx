@@ -4,6 +4,7 @@ import { signupSchema, type SignupInput } from "../validation/auth.validation";
 import { useState, type ReactElement } from "react";
 import { useAuthStore } from "../store/auth.store";
 import { authService } from "../services/auth.service";
+import axios from "axios";
 
 export default function SignupForm(): ReactElement {
   const {
@@ -24,8 +25,11 @@ export default function SignupForm(): ReactElement {
       const { accessToken, user } = await authService.signup(payload);
       setAuth(accessToken, user);
       setError("");
-    } catch (error: any) {
-      setError(error?.response?.data?.message || "Signup failed");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        setError(error?.response?.data?.message || "Signup failed");
+      }
+      setError("An unexpected error occurred");
     }
   };
 
@@ -77,9 +81,7 @@ export default function SignupForm(): ReactElement {
         />
 
         {errors.email && (
-          <p className="text-xs text-red-500">
-            {errors.email.message}
-          </p>
+          <p className="text-xs text-red-500">{errors.email.message}</p>
         )}
       </div>
 
@@ -106,8 +108,8 @@ export default function SignupForm(): ReactElement {
       </div>
 
       <div className="space-y-1">
-        <label htmlFor="password" className="text-xs font-medium text-gray-700">
-          Password
+        <label htmlFor="confirmPassword" className="text-xs font-medium text-gray-700">
+          Confirm Password
         </label>
 
         <input

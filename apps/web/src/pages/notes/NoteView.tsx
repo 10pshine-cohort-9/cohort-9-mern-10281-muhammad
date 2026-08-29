@@ -38,7 +38,6 @@ export default function NoteView(): ReactElement {
       setDeleteError(null);
 
       await deleteNote(note.slug);
-      await getNotes();
 
       setDeleteOpen(false);
       navigate("/");
@@ -87,6 +86,7 @@ export default function NoteView(): ReactElement {
             <Link
               aria-label="Edit note"
               to={`/n/${note.slug}/edit`}
+              aria-label="Edit note"
               className="
                 flex items-center justify-center
                 w-8 h-8
@@ -129,7 +129,7 @@ export default function NoteView(): ReactElement {
         </h1>
 
         <p className="text-xs text-gray-400">
-          Last updated: {formatDate(note.updatedAt)}
+          Updated {formatDate(note.updatedAt) || "recently"}
         </p>
       </div>
 

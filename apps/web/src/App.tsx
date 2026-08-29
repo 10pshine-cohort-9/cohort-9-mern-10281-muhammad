@@ -20,24 +20,6 @@ const NoteEdit = lazy(() => import("./pages/notes/NoteEdit"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 export default function App(): ReactElement {
-  const setAuth = useAuthStore((s) => s.setAuth);
-  const setLoading = useAuthStore((s) => s.setLoading);
-
-  useEffect(() => {
-    const refresh = async () => {
-      try {
-        const { accessToken, user } = await authService.refresh();
-        setAuth(accessToken, user);
-      } catch {
-        setAuth(null, null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    refresh();
-  }, []);
-
   return (
     <Suspense fallback={<Loading />}>
       <Routes>

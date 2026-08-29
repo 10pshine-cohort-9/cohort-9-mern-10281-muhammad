@@ -1,7 +1,12 @@
 import { FileText, Home, Pencil, Plus, User } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { ReactElement } from "react";
+import { FileText, Home, Pencil, Plus, User } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import type { ReactElement } from "react";
 import { Link, useLocation } from "react-router-dom";
+
+import { useNotesStore } from "../store/notes.store";
 
 import { useNotesStore } from "../store/notes.store";
 
@@ -9,7 +14,12 @@ type RouteMeta = {
   label: string;
   icon?: LucideIcon;
 };
+type RouteMeta = {
+  label: string;
+  icon?: LucideIcon;
+};
 
+const routeMeta: Record<string, RouteMeta> = {
 const routeMeta: Record<string, RouteMeta> = {
   profile: { label: "Profile", icon: User },
   new: { label: "New note", icon: Plus },
@@ -41,6 +51,7 @@ export default function TopBar(): ReactElement {
   } else if (isNoteRoute) {
     const slug = paths[1];
 
+    // /n redirects to /
     if (slug === "new") {
       items.push({
         label: "New note",

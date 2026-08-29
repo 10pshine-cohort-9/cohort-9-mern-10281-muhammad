@@ -26,8 +26,6 @@ export default function Home(): ReactElement {
 
     try {
       setDeleting(true);
-      setDeleteError(null);
-
       await deleteNote(deleteSlug);
       setDeleteSlug(null);
     } catch (error) {

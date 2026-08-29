@@ -86,6 +86,7 @@ export default function NoteView(): ReactElement {
             <Link
               aria-label="Edit note"
               to={`/n/${note.slug}/edit`}
+              aria-label="Edit note"
               className="
                 flex items-center justify-center
                 w-8 h-8
@@ -103,10 +104,7 @@ export default function NoteView(): ReactElement {
             <button
               type="button"
               aria-label="Delete note"
-              onClick={() => {
-                setDeleteError(null);
-                setDeleteOpen(true);
-              }}
+              onClick={() => setDeleteOpen(true)}
               className="
                 flex items-center justify-center
                 w-8 h-8

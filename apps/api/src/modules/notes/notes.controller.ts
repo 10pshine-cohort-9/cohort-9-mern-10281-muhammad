@@ -20,8 +20,10 @@ export default class NotesController {
 
   getAll = async (req: Request, res: Response): Promise<void> => {
     const userId = req.user!._id;
+    const search =
+      typeof req.query.search === "string" ? req.query.search : undefined;
 
-    const notes = await this.service.getAll(userId);
+    const notes = await this.service.getAll(userId, search);
 
     sendResponse(res, 200, notes);
   };

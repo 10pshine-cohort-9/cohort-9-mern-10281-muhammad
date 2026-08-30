@@ -61,9 +61,12 @@ export default class NotesService {
     );
   };
 
-  getAll = async (userId: mongoose.Types.ObjectId): Promise<NoteDocument[]> => {
+  getAll = async (
+    userId: mongoose.Types.ObjectId,
+    search?: string,
+  ): Promise<NoteDocument[]> => {
     try {
-      const notes = await this.repository.findAllByUser(userId);
+      const notes = await this.repository.findAllByUser(userId, search);
 
       logger.debug(
         { userId: userId.toString(), count: notes.length },

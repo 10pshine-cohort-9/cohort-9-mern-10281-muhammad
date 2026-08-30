@@ -17,8 +17,18 @@ export default class NotesRepository {
 
   findAllByUser = async (
     userId: mongoose.Types.ObjectId,
+    search?: string,
   ): Promise<NoteDocument[]> => {
-    return Note.find({ userId });
+    const filter: Record<string, unknown> = { userId };
+
+    if (search?.trim()) {
+      filter.$or = [
+        { title: { $regex: search.trim(), $options: "i" } },
+        { content: { $regex: search.trim(), $options: "i" } },
+      ];
+    }
+
+    return Note.find(filter).sort({ updatedAt: -1 });
   };
 
   findByIdAndUser = async (

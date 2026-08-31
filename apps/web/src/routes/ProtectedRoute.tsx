@@ -1,8 +1,12 @@
 import type { ReactElement } from "react";
 import { Navigate, Outlet } from "react-router-dom";
+import { useAuthStore } from "../store/auth.store";
 
 export default function ProtectedRoute(): ReactElement {
-  const isAuth = true;
+  const loading = useAuthStore((s) => s.loading);
+  const accessToken = useAuthStore((s) => s.accessToken);
 
-  return isAuth ? <Outlet /> : <Navigate to="/login" />;
+  if (!loading && !accessToken) return <Navigate to="/login" />;
+
+  return <Outlet />;
 }

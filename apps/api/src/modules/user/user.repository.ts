@@ -35,6 +35,6 @@ export default class UserRepository {
   findById = async (
     id: mongoose.Types.ObjectId,
   ): Promise<UserDocument | null> => {
-    return User.findById(id);
+    return User.findById(id).exec();
   };
 }

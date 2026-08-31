@@ -1,30 +1,41 @@
+import axios from "axios";
 import { create } from "zustand";
-import { api } from "../api/axios";
 
-export type Note = {
-  slug: string;
-  title: string;
-  content: string;
-  updatedAt: any;
-};
+import { api } from "../api/axios";
+import type {
+  CreateNoteData,
+  Note,
+  UpdateNoteData,
+} from "../services/notes.service";
 
 type NotesState = {
   notes: Note[];
+  note: Note | null;
   loading: boolean;
   error: string | null;
 
-  createNote: (data: { title: string; content: string }) => Promise<void>;
+  createNote: (data: CreateNoteData) => Promise<void>;
   getNotes: () => Promise<void>;
   getNote: (slug: string) => Promise<void>;
-  updateNote: (
-    slug: string,
-    data: { title?: string; content?: string },
-  ) => Promise<void>;
+  updateNote: (slug: string, data: UpdateNoteData) => Promise<void>;
   deleteNote: (slug: string) => Promise<void>;
+};
+
+type ApiErrorResponse = {
+  message?: string;
+};
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (axios.isAxiosError<ApiErrorResponse>(error)) {
+    return error.response?.data?.message ?? fallback;
+  }
+
+  return fallback;
 };
 
 export const useNotesStore = create<NotesState>((set, get) => ({
   notes: [],
+  note: null,
   loading: false,
   error: null,
 
@@ -32,11 +43,15 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     set({ loading: true, error: null });
 
     try {
-      const res = await api.get("/notes");
-      set({ notes: res.data.data, loading: false });
-    } catch (err: any) {
+      const res = await api.get<{ data: Note[] }>("/notes");
+
       set({
-        error: err.response?.data?.message || "Failed to fetch notes",
+        notes: res.data.data,
+        loading: false,
+      });
+    } catch (error: unknown) {
+      set({
+        error: getErrorMessage(error, "Failed to fetch notes"),
         loading: false,
       });
     }
@@ -46,58 +61,67 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     set({ loading: true, error: null });
 
     try {
-      const res = await api.get(`/notes/${slug}`);
-      set({ notes: res.data.data, loading: false });
-    } catch (err: any) {
+      const res = await api.get<{ data: Note }>(`/notes/${slug}`);
+
       set({
-        error: err.response?.data?.message || "Failed to fetch notes",
+        note: res.data.data,
+        loading: false,
+      });
+    } catch (error: unknown) {
+      set({
+        error: getErrorMessage(error, "Failed to fetch note"),
         loading: false,
       });
     }
   },
 
-  createNote: async (data) => {
+  createNote: async (data: CreateNoteData) => {
     try {
-      const res = await api.post("/notes", data);
+      const res = await api.post<{ data: Note }>("/notes", data);
 
       set({
         notes: [res.data.data, ...get().notes],
       });
-    } catch (err: any) {
+    } catch (error: unknown) {
       set({
-        error: err.response?.data?.message || "Failed to create note",
+        error: getErrorMessage(error, "Failed to create note"),
       });
-      throw err;
+
+      throw error;
     }
   },
 
-  updateNote: async (slug, data) => {
+  updateNote: async (slug: string, data: UpdateNoteData) => {
     try {
-      const res = await api.patch(`/notes/${slug}`, data);
+      const res = await api.patch<{ data: Note }>(`/notes/${slug}`, data);
 
       set({
-        notes: get().notes.map((n) => (n.slug === slug ? res.data.data : n)),
+        notes: get().notes.map((note) =>
+          note.slug === slug ? res.data.data : note,
+        ),
       });
-    } catch (err: any) {
+    } catch (error: unknown) {
       set({
-        error: err.response?.data?.message || "Failed to update note",
+        error: getErrorMessage(error, "Failed to update note"),
       });
-      throw err;
+
+      throw error;
     }
   },
 
-  deleteNote: async (slug) => {
+  deleteNote: async (slug: string) => {
     try {
       await api.delete(`/notes/${slug}`);
 
       set({
-        notes: get().notes.filter((n) => n.slug !== slug),
+        notes: get().notes.filter((note) => note.slug !== slug),
       });
-    } catch (err: any) {
+    } catch (error: unknown) {
       set({
-        error: err.response?.data?.message || "Failed to delete note",
+        error: getErrorMessage(error, "Failed to delete note"),
       });
-      throw err;
+
+      throw error;
     }
   },
 }));

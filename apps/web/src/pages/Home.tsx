@@ -16,6 +16,7 @@ export default function Home(): ReactElement {
 
   const [deleteSlug, setDeleteSlug] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     getNotes();
@@ -26,11 +27,18 @@ export default function Home(): ReactElement {
 
     try {
       setDeleting(true);
+      setDeleteError(null);
 
       await deleteNote(deleteSlug);
       await getNotes();
 
       setDeleteSlug(null);
+    } catch (error) {
+      setDeleteError(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete note. Please try again.",
+      );
     } finally {
       setDeleting(false);
     }
@@ -70,29 +78,29 @@ export default function Home(): ReactElement {
             <div
               key={note.slug}
               className="
-                  group relative
-                  bg-white
-                  border border-gray-200
-                  rounded-xl
-                  p-4
-                  transition-all
-                  hover:shadow-lg
-                  hover:-translate-y-0.5
-                  hover:border-gray-300
-                  overflow-hidden
-                "
+                group relative
+                bg-white
+                border border-gray-200
+                rounded-xl
+                p-4
+                transition-all
+                hover:shadow-lg
+                hover:-translate-y-0.5
+                hover:border-gray-300
+                overflow-hidden
+              "
             >
               <div
                 className="
-                    absolute inset-0
-                    opacity-0
-                    group-hover:opacity-100
-                    transition
-                    bg-linear-to-br
-                    from-black/5
-                    to-transparent
-                    pointer-events-none
-                  "
+                  absolute inset-0
+                  opacity-0
+                  group-hover:opacity-100
+                  transition
+                  bg-linear-to-br
+                  from-black/5
+                  to-transparent
+                  pointer-events-none
+                "
               />
 
               <Link
@@ -114,25 +122,26 @@ export default function Home(): ReactElement {
 
               <div
                 className="
-                    absolute top-3 right-3
-                    opacity-0
-                    group-hover:opacity-100
-                    transition
-                    flex items-center gap-1
-                    z-20
-                  "
+                  absolute top-3 right-3
+                  opacity-0
+                  group-hover:opacity-100
+                  transition
+                  flex items-center gap-1
+                  z-20
+                "
               >
                 <Tooltip text="Edit">
                   <Link
                     to={`/n/${note.slug}/edit`}
+                    aria-label="Edit note"
                     className="
-                        flex items-center justify-center
-                        w-8 h-8
-                        rounded-md
-                        text-gray-600
-                        hover:bg-gray-100
-                        transition
-                      "
+                      flex items-center justify-center
+                      w-8 h-8
+                      rounded-md
+                      text-gray-600
+                      hover:bg-gray-100
+                      transition
+                    "
                   >
                     <Edit2 size={14} />
                   </Link>
@@ -140,15 +149,19 @@ export default function Home(): ReactElement {
 
                 <Tooltip text="Delete">
                   <button
-                    onClick={() => setDeleteSlug(note.slug)}
+                    aria-label="Delete note"
+                    onClick={() => {
+                      setDeleteError(null);
+                      setDeleteSlug(note.slug);
+                    }}
                     className="
-                        flex items-center justify-center
-                        w-8 h-8
-                        rounded-md
-                        text-red-500
-                        hover:bg-red-50
-                        transition
-                      "
+                      flex items-center justify-center
+                      w-8 h-8
+                      rounded-md
+                      text-red-500
+                      hover:bg-red-50
+                      transition
+                    "
                   >
                     <Trash2 size={14} />
                   </button>
@@ -164,10 +177,12 @@ export default function Home(): ReactElement {
         setIsOpen={(isOpen) => {
           if (!isOpen && !deleting) {
             setDeleteSlug(null);
+            setDeleteError(null);
           }
         }}
         loading={deleting}
         onConfirm={handleDelete}
+        error={deleteError}
       />
     </>
   );

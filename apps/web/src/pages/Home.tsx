@@ -15,6 +15,7 @@ export default function Home(): ReactElement {
 
   const [deleteSlug, setDeleteSlug] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     getNotes();
@@ -25,8 +26,16 @@ export default function Home(): ReactElement {
 
     try {
       setDeleting(true);
+      setDeleteError(null);
+
       await deleteNote(deleteSlug);
       setDeleteSlug(null);
+    } catch (error) {
+      setDeleteError(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete note. Please try again.",
+      );
     } finally {
       setDeleting(false);
     }
@@ -71,10 +80,12 @@ export default function Home(): ReactElement {
         setIsOpen={(isOpen) => {
           if (!isOpen && !deleting) {
             setDeleteSlug(null);
+            setDeleteError(null);
           }
         }}
         loading={deleting}
         onConfirm={handleDelete}
+        error={deleteError}
       />
     </>
   );

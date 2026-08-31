@@ -1,3 +1,4 @@
+import axios from "axios";
 import { create } from "zustand";
 import axios from "axios";
 
@@ -16,6 +17,7 @@ type ApiError = {
 
 type NotesState = {
   notes: Note[];
+  note: Note | null;
   loading: boolean;
   error: string | null;
   query: string;
@@ -23,10 +25,7 @@ type NotesState = {
   createNote: (data: { title: string; content: string }) => Promise<void>;
   getNotes: (query?: string) => Promise<void>;
   getNote: (slug: string) => Promise<void>;
-  updateNote: (
-    slug: string,
-    data: { title?: string; content?: string },
-  ) => Promise<void>;
+  updateNote: (slug: string, data: UpdateNoteData) => Promise<void>;
   deleteNote: (slug: string) => Promise<void>;
 
   setQuery: (query: string) => void;
@@ -43,8 +42,21 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   return fallback;
 };
 
+type ApiErrorResponse = {
+  message?: string;
+};
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (axios.isAxiosError<ApiErrorResponse>(error)) {
+    return error.response?.data?.message ?? fallback;
+  }
+
+  return fallback;
+};
+
 export const useNotesStore = create<NotesState>((set, get) => ({
   notes: [],
+  note: null,
   loading: false,
   error: null,
   query: "",
@@ -74,6 +86,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
 
       set({
         error: getErrorMessage(error, "Failed to fetch notes"),
+        error: getErrorMessage(error, "Failed to fetch notes"),
         loading: false,
       });
     }
@@ -95,6 +108,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     } catch (error: unknown) {
       set({
         error: getErrorMessage(error, "Failed to fetch note"),
+        error: getErrorMessage(error, "Failed to fetch note"),
         loading: false,
       });
     }
@@ -104,7 +118,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     set({ error: null });
 
     try {
-      const res = await api.post("/notes", data);
+      const res = await api.post<{ data: Note }>("/notes", data);
 
       set((state) => ({
         notes: [res.data.data, ...state.notes],
@@ -115,6 +129,8 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       });
 
       throw error;
+
+      throw error;
     }
   },
 
@@ -122,7 +138,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     set({ error: null });
 
     try {
-      const res = await api.patch(`/notes/${slug}`, data);
+      const res = await api.patch<{ data: Note }>(`/notes/${slug}`, data);
 
       set((state) => ({
         notes: state.notes.map((note) =>
@@ -133,6 +149,8 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       set({
         error: getErrorMessage(error, "Failed to update note"),
       });
+
+      throw error;
 
       throw error;
     }
@@ -151,6 +169,8 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       set({
         error: getErrorMessage(error, "Failed to delete note"),
       });
+
+      throw error;
 
       throw error;
     }

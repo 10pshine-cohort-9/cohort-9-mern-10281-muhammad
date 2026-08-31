@@ -23,6 +23,7 @@ export default function Profile(): ReactElement {
 
   const [deleteSlug, setDeleteSlug] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     getNotes();
@@ -48,8 +49,18 @@ export default function Profile(): ReactElement {
 
     try {
       setDeleting(true);
+      setDeleteError(null);
+
       await deleteNote(deleteSlug);
+      await getNotes();
+
       setDeleteSlug(null);
+    } catch (error) {
+      setDeleteError(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete note. Please try again.",
+      );
     } finally {
       setDeleting(false);
     }
@@ -182,7 +193,10 @@ export default function Profile(): ReactElement {
                         <Tooltip text="Delete">
                           <button
                             type="button"
-                            onClick={() => setDeleteSlug(note.slug)}
+                            onClick={() => {
+                              setDeleteError(null);
+                              setDeleteSlug(note.slug);
+                            }}
                             aria-label="Delete note"
                             className="
                       flex h-8 w-8 items-center justify-center
@@ -211,10 +225,12 @@ export default function Profile(): ReactElement {
         setIsOpen={(isOpen) => {
           if (!isOpen && !deleting) {
             setDeleteSlug(null);
+            setDeleteError(null);
           }
         }}
         loading={deleting}
         onConfirm={handleDelete}
+        error={deleteError}
       />
     </>
   );

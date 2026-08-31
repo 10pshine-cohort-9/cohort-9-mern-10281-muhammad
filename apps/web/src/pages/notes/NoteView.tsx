@@ -1,6 +1,7 @@
 import { ArrowLeft, Edit2, Trash2 } from "lucide-react";
 import { useEffect, useState, type ReactElement } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import DOMPurify from "dompurify";
 
 import NotFound from "../NotFound";
 import ConfirmModal from "../../components/ConfirmModal";
@@ -10,7 +11,6 @@ import { useNotesStore } from "../../store/notes.store";
 import { formatDate } from "../../utils/formatDate";
 
 export default function NoteView(): ReactElement {
-  const { slug } = useParams();
   const navigate = useNavigate();
 
   const notes = useNotesStore((s) => s.notes);
@@ -20,6 +20,7 @@ export default function NoteView(): ReactElement {
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!notes.length) {
@@ -27,18 +28,25 @@ export default function NoteView(): ReactElement {
     }
   }, [getNotes, notes.length]);
 
-  const note = notes.find((n) => n.slug === slug);
+  const note = useNotesStore((s) => s.note);
 
   const handleDelete = async () => {
     if (!note) return;
 
     try {
       setDeleting(true);
+      setDeleteError(null);
 
       await deleteNote(note.slug);
 
       setDeleteOpen(false);
       navigate("/");
+    } catch (error) {
+      setDeleteError(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete note. Please try again.",
+      );
     } finally {
       setDeleting(false);
     }
@@ -62,12 +70,12 @@ export default function NoteView(): ReactElement {
         <Link
           to="/"
           className="
-              flex items-center gap-1.5
-              text-sm
-              text-gray-600
-              hover:text-black
-              transition
-            "
+            flex items-center gap-1.5
+            text-sm
+            text-gray-600
+            hover:text-black
+            transition
+          "
         >
           <ArrowLeft size={16} />
           Back
@@ -76,16 +84,17 @@ export default function NoteView(): ReactElement {
         <div className="flex items-center gap-1">
           <Tooltip text="Edit">
             <Link
+              aria-label="Edit note"
               to={`/n/${note.slug}/edit`}
               aria-label="Edit note"
               className="
-                  flex items-center justify-center
-                  w-8 h-8
-                  rounded-md
-                  text-gray-600
-                  hover:bg-gray-100
-                  transition
-                "
+                flex items-center justify-center
+                w-8 h-8
+                rounded-md
+                text-gray-600
+                hover:bg-gray-100
+                transition
+              "
             >
               <Edit2 size={16} />
             </Link>
@@ -95,15 +104,18 @@ export default function NoteView(): ReactElement {
             <button
               type="button"
               aria-label="Delete note"
-              onClick={() => setDeleteOpen(true)}
+              onClick={() => {
+                setDeleteError(null);
+                setDeleteOpen(true);
+              }}
               className="
-                  flex items-center justify-center
-                  w-8 h-8
-                  rounded-md
-                  text-red-500
-                  hover:bg-red-50
-                  transition
-                "
+                flex items-center justify-center
+                w-8 h-8
+                rounded-md
+                text-red-500
+                hover:bg-red-50
+                transition
+              "
             >
               <Trash2 size={16} />
             </button>
@@ -123,23 +135,29 @@ export default function NoteView(): ReactElement {
 
       <div
         className="
-            prose prose-sm max-w-none
-            prose-headings:text-gray-900
-            prose-p:text-gray-700
-            prose-strong:text-gray-900
-            prose-li:text-gray-700
-            leading-relaxed
-          "
+          prose prose-sm max-w-none
+          prose-headings:text-gray-900
+          prose-p:text-gray-700
+          prose-strong:text-gray-900
+          prose-li:text-gray-700
+          leading-relaxed
+        "
         dangerouslySetInnerHTML={{
-          __html: note.content || "",
+          __html: DOMPurify.sanitize(note.content || ""),
         }}
       />
 
       <ConfirmModal
         isOpen={deleteOpen}
-        setIsOpen={setDeleteOpen}
+        setIsOpen={(isOpen) => {
+          if (!isOpen && !deleting) {
+            setDeleteOpen(false);
+            setDeleteError(null);
+          }
+        }}
         loading={deleting}
         onConfirm={handleDelete}
+        error={deleteError}
       />
     </>
   );

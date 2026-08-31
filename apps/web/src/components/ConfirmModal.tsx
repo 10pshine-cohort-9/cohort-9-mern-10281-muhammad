@@ -7,6 +7,7 @@ interface Props {
   message?: string;
   confirmText?: string;
   loading?: boolean;
+  error?: string | null;
   onConfirm: () => void;
 }
 
@@ -17,6 +18,7 @@ export default function ConfirmModal({
   message = "Are you sure you want to delete this note? This action cannot be undone.",
   confirmText = "Delete",
   loading = false,
+  error = null,
   onConfirm,
 }: Props): ReactElement | null {
   const modalRef = useRef<HTMLDivElement>(null);
@@ -96,6 +98,15 @@ export default function ConfirmModal({
           <p id="confirm-modal-message" className="text-sm text-gray-500 mt-1">
             {message}
           </p>
+
+          {error && (
+            <p
+              role="alert"
+              className="text-sm text-red-600 mt-3"
+            >
+              {error}
+            </p>
+          )}
         </div>
 
         <div className="flex justify-end gap-2 px-4 py-3 border-t border-gray-300">

@@ -16,6 +16,7 @@ type ApiError = {
 
 type NotesState = {
   notes: Note[];
+  note: Note | null;
   searchResults: Note[];
 
   loading: boolean;
@@ -26,10 +27,7 @@ type NotesState = {
   getNotes: () => Promise<void>;
   searchNotes: (query: string) => Promise<void>;
   getNote: (slug: string) => Promise<void>;
-  updateNote: (
-    slug: string,
-    data: { title?: string; content?: string },
-  ) => Promise<void>;
+  updateNote: (slug: string, data: UpdateNoteData) => Promise<void>;
   deleteNote: (slug: string) => Promise<void>;
 
   clearSearch: () => void;
@@ -46,8 +44,21 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   return fallback;
 };
 
+type ApiErrorResponse = {
+  message?: string;
+};
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (axios.isAxiosError<ApiErrorResponse>(error)) {
+    return error.response?.data?.message ?? fallback;
+  }
+
+  return fallback;
+};
+
 export const useNotesStore = create<NotesState>((set, get) => ({
   notes: [],
+  note: null,
   searchResults: [],
 
   loading: false,
@@ -69,6 +80,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       });
     } catch (error: unknown) {
       set({
+        error: getErrorMessage(error, "Failed to fetch notes"),
         error: getErrorMessage(error, "Failed to fetch notes"),
         loading: false,
       });
@@ -130,6 +142,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     } catch (error: unknown) {
       set({
         error: getErrorMessage(error, "Failed to fetch note"),
+        error: getErrorMessage(error, "Failed to fetch note"),
         loading: false,
       });
     }
@@ -151,6 +164,8 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       });
 
       throw error;
+
+      throw error;
     }
   },
 
@@ -170,6 +185,8 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       });
 
       throw error;
+
+      throw error;
     }
   },
 
@@ -187,6 +204,8 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       set({
         error: getErrorMessage(error, "Failed to delete note"),
       });
+
+      throw error;
 
       throw error;
     }

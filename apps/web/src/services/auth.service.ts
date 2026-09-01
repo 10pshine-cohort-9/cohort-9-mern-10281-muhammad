@@ -1,11 +1,6 @@
 import { api } from "../api/axios";
+import type { User } from "../store/auth.store";
 import type { LoginInput, SignupInput } from "../validation/auth.validation";
-
-export type User = {
-  id: string;
-  username: string;
-  email: string;
-};
 
 export type AuthResponse = {
   accessToken: string;
@@ -29,6 +24,7 @@ export const authService = {
     const res = await api.post("/auth/register", data);
     return res.data.data;
   },
+
   logout: async (): Promise<void> => {
     await api.post("/auth/logout");
   },

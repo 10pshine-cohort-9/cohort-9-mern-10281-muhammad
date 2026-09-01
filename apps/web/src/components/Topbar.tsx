@@ -1,7 +1,12 @@
 import { FileText, Home, Pencil, Plus, User } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { ReactElement } from "react";
+import { FileText, Home, Pencil, Plus, User } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import type { ReactElement } from "react";
 import { Link, useLocation } from "react-router-dom";
+
+import { useNotesStore } from "../store/notes.store";
 
 import { useNotesStore } from "../store/notes.store";
 
@@ -9,10 +14,17 @@ type RouteMeta = {
   label: string;
   icon?: LucideIcon;
 };
+type RouteMeta = {
+  label: string;
+  icon?: LucideIcon;
+};
 
+const routeMeta: Record<string, RouteMeta> = {
 const routeMeta: Record<string, RouteMeta> = {
   profile: { label: "Profile", icon: User },
   new: { label: "New note", icon: Plus },
+  edit: { label: "Edit", icon: Pencil },
+  "404": { label: "404" },
   edit: { label: "Edit", icon: Pencil },
   "404": { label: "404" },
 };
@@ -80,8 +92,32 @@ export default function TopBar(): ReactElement {
       url: meta ? `/${segment}` : "/404",
     });
   }
+      items.push({
+        label: note?.title || "Note",
+        url: `/n/${slug}`,
+      });
+
+      if (paths[2] === "edit") {
+        items.push({
+          label: "Edit",
+          icon: Pencil,
+          url: `/n/${slug}/edit`,
+        });
+      }
+    }
+  } else if (paths[0]) {
+    const segment = paths[0];
+    const meta = routeMeta[segment];
+
+    items.push({
+      label: meta?.label ?? "404",
+      icon: meta?.icon,
+      url: meta ? `/${segment}` : "/404",
+    });
+  }
 
   return (
+    <header className="h-16 px-6 flex items-center border-b border-gray-200 bg-white">
     <header className="h-16 px-6 flex items-center border-b border-gray-200 bg-white">
       <nav className="flex items-center text-sm text-gray-500">
         <Link
@@ -93,19 +129,34 @@ export default function TopBar(): ReactElement {
           <Home size={14} />
           Home
         </Link>
+        <Link
+          to="/"
+          className={`flex items-center gap-1 transition ${
+            isHome ? "text-black font-medium" : "hover:text-black"
+          }`}
+        >
+          <Home size={14} />
+          Home
+        </Link>
 
+        {items.map((item, index) => {
         {items.map((item, index) => {
           const Icon = item.icon;
           const isLast = index === items.length - 1;
+          const isLast = index === items.length - 1;
 
           return (
+            <div key={`${item.url}-${index}`} className="flex items-center">
             <div key={`${item.url}-${index}`} className="flex items-center">
               <span className="mx-2 text-gray-300">/</span>
 
               {isLast ? (
                 <span className="flex items-center gap-1 text-black font-medium">
+              {isLast ? (
+                <span className="flex items-center gap-1 text-black font-medium">
                   {Icon && <Icon size={14} />}
                   {item.label}
+                </span>
                 </span>
               ) : (
                 <Link

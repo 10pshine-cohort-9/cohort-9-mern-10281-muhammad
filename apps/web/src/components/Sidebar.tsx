@@ -108,7 +108,9 @@ export default function Sidebar(): ReactElement {
         </div>
       </aside>
 
-      <SearchModal isOpen={isSearchOpen} setIsOpen={setIsSearchOpen} />
+      {user && (
+        <SearchModal isOpen={isSearchOpen} setIsOpen={setIsSearchOpen} />
+      )}
     </>
   );
 }

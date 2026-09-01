@@ -10,25 +10,57 @@ export type Note = {
   updatedAt: string;
 };
 
+type ApiResponse<T> = {
+  data: T;
+};
+
+type ApiError = {
+  message: string;
+};
+
+export type Note = {
+  slug: string;
+  title: string;
+  content: string;
+  updatedAt: string;
+};
+
 type ApiError = {
   message: string;
 };
 
 type NotesState = {
   notes: Note[];
+  searchResults: Note[];
+
   note: Note | null;
   searchResults: Note[];
 
   loading: boolean;
   searching: boolean;
+  searching: boolean;
   error: string | null;
+
+  createNote: (data: { title: string; content: string }) => Promise<void>;
 
   createNote: (data: { title: string; content: string }) => Promise<void>;
   getNotes: () => Promise<void>;
   searchNotes: (query: string) => Promise<void>;
+  getNote: (slug: string) => Promise<Note>;
+  updateNote: (
+    slug: string,
+    data: {
+      title?: string;
+      content?: string;
+    },
+  ) => Promise<void>;
+  searchNotes: (query: string) => Promise<void>;
   getNote: (slug: string) => Promise<void>;
   updateNote: (slug: string, data: UpdateNoteData) => Promise<void>;
   deleteNote: (slug: string) => Promise<void>;
+
+  clearSearch: () => void;
+  clearError: () => void;
 
   clearSearch: () => void;
   clearError: () => void;
@@ -44,24 +76,25 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   return fallback;
 };
 
-type ApiErrorResponse = {
-  message?: string;
-};
+let searchRequestId = 0;
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
-  if (axios.isAxiosError<ApiErrorResponse>(error)) {
-    return error.response?.data?.message ?? fallback;
+  if (axios.isAxiosError<ApiError>(error)) {
+    return error.response?.data?.message || fallback;
   }
 
   return fallback;
 };
 
-export const useNotesStore = create<NotesState>((set, get) => ({
+export const useNotesStore = create<NotesState>((set) => ({
   notes: [],
+  searchResults: [],
+
   note: null,
   searchResults: [],
 
   loading: false,
+  searching: false,
   searching: false,
   error: null,
 
@@ -70,8 +103,13 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       loading: true,
       error: null,
     });
+    set({
+      loading: true,
+      error: null,
+    });
 
     try {
+      const res = await api.get<ApiResponse<Note[]>>("/notes");
       const res = await api.get("/notes");
 
       set({
@@ -84,9 +122,31 @@ export const useNotesStore = create<NotesState>((set, get) => ({
         error: getErrorMessage(error, "Failed to fetch notes"),
         loading: false,
       });
+
+      throw error;
     }
   },
 
+  searchNotes: async (query) => {
+    const value = query.trim();
+
+    if (!value) {
+      searchRequestId++;
+
+      set({
+        searchResults: [],
+        searching: false,
+      });
+
+      return;
+    }
+
+    const requestId = ++searchRequestId;
+
+    set({
+      searching: true,
+      error: null,
+    });
   searchNotes: async (query) => {
     const value = query.trim();
 
@@ -103,6 +163,15 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     });
 
     try {
+      const res = await api.get<ApiResponse<Note[]>>("/notes", {
+        params: {
+          search: value,
+        },
+      });
+
+      if (requestId !== searchRequestId) {
+        return;
+      }
       const res = await api.get("/notes", {
         params: { search: value },
       });
@@ -145,16 +214,28 @@ export const useNotesStore = create<NotesState>((set, get) => ({
         error: getErrorMessage(error, "Failed to fetch note"),
         loading: false,
       });
+
+      throw error;
     }
   },
+
+  createNote: async (data) => {
+    set({
+      error: null,
+    });
 
   createNote: async (data) => {
     set({ error: null });
 
     try {
+      const res = await api.post<ApiResponse<Note>>("/notes", data);
+      const note = res.data.data;
       const res = await api.post("/notes", data);
       const note: Note = res.data.data;
 
+      set((state) => ({
+        notes: [note, ...state.notes],
+      }));
       set((state) => ({
         notes: [note, ...state.notes],
       }));
@@ -170,12 +251,27 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   },
 
   updateNote: async (slug, data) => {
+    set({
+      error: null,
+    });
+
+  updateNote: async (slug, data) => {
     set({ error: null });
 
     try {
+      const res = await api.patch<ApiResponse<Note>>(`/notes/${slug}`, data);
       const res = await api.patch(`/notes/${slug}`, data);
       const note: Note = res.data.data;
 
+      const note = res.data.data;
+
+      set((state) => ({
+        notes: state.notes.map((item) => (item.slug === slug ? note : item)),
+
+        searchResults: state.searchResults.map((item) =>
+          item.slug === slug ? note : item,
+        ),
+      }));
       set((state) => ({
         notes: state.notes.map((item) => (item.slug === slug ? note : item)),
       }));
@@ -189,6 +285,11 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       throw error;
     }
   },
+
+  deleteNote: async (slug) => {
+    set({
+      error: null,
+    });
 
   deleteNote: async (slug) => {
     set({ error: null });
@@ -209,6 +310,21 @@ export const useNotesStore = create<NotesState>((set, get) => ({
 
       throw error;
     }
+  },
+
+  clearSearch: () => {
+    searchRequestId++;
+
+    set({
+      searchResults: [],
+      searching: false,
+    });
+  },
+
+  clearError: () => {
+    set({
+      error: null,
+    });
   },
 
   clearSearch: () => {

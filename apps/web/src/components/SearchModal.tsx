@@ -3,11 +3,17 @@ import { useEffect, useRef, useState, type ReactElement } from "react";
 import { Link } from "react-router-dom";
 
 import { useNotesStore } from "../store/notes.store";
+import { useEffect, useRef, useState, type ReactElement } from "react";
+import { Link } from "react-router-dom";
+
+import { useNotesStore } from "../store/notes.store";
 
 interface Props {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }
+
+const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "");
 
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "");
 
@@ -27,6 +33,7 @@ export default function SearchModal({
   const [query, setQuery] = useState("");
 
   useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
 
@@ -53,6 +60,11 @@ export default function SearchModal({
     return () => {
       window.removeEventListener("keydown", handleGlobalKeyDown);
     };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleGlobalKeyDown);
+    };
   }, [setIsOpen]);
 
   useEffect(() => {
@@ -60,8 +72,18 @@ export default function SearchModal({
       clearSearch();
       return;
     }
+    if (!isOpen) {
+      clearSearch();
+      return;
+    }
 
     previouslyFocusedElement.current = document.activeElement as HTMLElement;
+
+    setQuery("");
+
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
 
     setQuery("");
 
@@ -80,12 +102,26 @@ export default function SearchModal({
       const focusable = modalRef.current?.querySelectorAll<HTMLElement>(
         'a[href], button, input, [tabindex]:not([tabindex="-1"])',
       );
+      if (e.key !== "Tab") return;
 
+      const focusable = modalRef.current?.querySelectorAll<HTMLElement>(
+        'a[href], button, input, [tabindex]:not([tabindex="-1"])',
+      );
+
+      if (!focusable?.length) return;
       if (!focusable?.length) return;
 
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
 
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
       if (e.shiftKey && document.activeElement === first) {
         e.preventDefault();
         last.focus();
@@ -96,6 +132,11 @@ export default function SearchModal({
     };
 
     window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, setIsOpen, clearSearch]);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
@@ -118,6 +159,7 @@ export default function SearchModal({
     if (!isOpen && previouslyFocusedElement.current) {
       previouslyFocusedElement.current.focus();
       previouslyFocusedElement.current = null;
+      previouslyFocusedElement.current = null;
     }
   }, [isOpen]);
 
@@ -135,10 +177,25 @@ export default function SearchModal({
         bg-black/30
         backdrop-blur-sm
       "
+      className="
+        fixed inset-0 z-50
+        flex items-start justify-center
+        pt-24
+        bg-black/30
+        backdrop-blur-sm
+      "
       onClick={() => setIsOpen(false)}
     >
       <div
         ref={modalRef}
+        className="
+          w-full max-w-md
+          overflow-hidden
+          bg-white
+          rounded-xl
+          border border-gray-200
+          shadow-lg
+        "
         className="
           w-full max-w-md
           overflow-hidden
@@ -160,12 +217,29 @@ export default function SearchModal({
             className="shrink-0 text-gray-500"
           />
 
+        <div className="flex items-center border-b border-gray-200 px-4">
+          <Search
+            size={16}
+            aria-hidden="true"
+            className="shrink-0 text-gray-500"
+          />
+
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
             aria-label="Search notes"
             placeholder="Search notes..."
+            autoComplete="off"
+            className="
+              w-full
+              px-3 py-3
+              text-sm
+              outline-none
+              bg-transparent
+            "
             autoComplete="off"
             className="
               w-full
@@ -227,6 +301,7 @@ export default function SearchModal({
               K
             </kbd>
           </span>
+
 
           <span>
             <kbd className="px-1.5 py-0.5 border border-gray-300 rounded">

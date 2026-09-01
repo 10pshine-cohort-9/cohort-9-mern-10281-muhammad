@@ -1,3 +1,4 @@
+import axios from "axios";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState, type ReactElement } from "react";
 import { useForm } from "react-hook-form";
@@ -6,12 +7,12 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import FormField from "../../components/FormField";
 import PageHeader from "../../components/PageHeader";
 import RichEditor from "../../components/RichEditor";
-import NotFound from "../NotFound";
 import { useNotesStore } from "../../store/notes.store";
 import {
   updateNoteSchema,
   type UpdateNoteInput,
 } from "../../validation/notes.validation";
+import NotFound from "../NotFound";
 
 export default function NoteEdit(): ReactElement {
   const { slug } = useParams<{ slug: string }>();
@@ -27,6 +28,7 @@ export default function NoteEdit(): ReactElement {
   const [content, setContent] = useState("");
   const [fetchingNote, setFetchingNote] = useState(!note);
   const [notFound, setNotFound] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
   const {
@@ -44,8 +46,16 @@ export default function NoteEdit(): ReactElement {
   });
 
   useEffect(() => {
-    if (!slug || note) {
+    if (!slug) {
       setFetchingNote(false);
+      setNotFound(true);
+      return;
+    }
+
+    if (note) {
+      setFetchingNote(false);
+      setNotFound(false);
+      setFetchError(null);
       return;
     }
 
@@ -54,13 +64,20 @@ export default function NoteEdit(): ReactElement {
     const fetchNote = async () => {
       setFetchingNote(true);
       setNotFound(false);
+      setFetchError(null);
 
       try {
         await getNote(slug);
-      } catch (error) {
+      } catch (error: unknown) {
         if (cancelled) return;
 
-        setNotFound(true);
+        if (axios.isAxiosError(error) && error.response?.status === 404) {
+          setNotFound(true);
+        } else {
+          setFetchError(
+            "Failed to load the note. Please check your connection and try again.",
+          );
+        }
       } finally {
         if (!cancelled) {
           setFetchingNote(false);
@@ -68,7 +85,7 @@ export default function NoteEdit(): ReactElement {
       }
     };
 
-    fetchNote();
+    void fetchNote();
 
     return () => {
       cancelled = true;
@@ -85,6 +102,32 @@ export default function NoteEdit(): ReactElement {
 
     setContent(note.content || "");
   }, [note, reset]);
+
+  const handleRetry = () => {
+    if (!slug) return;
+
+    setFetchingNote(true);
+    setNotFound(false);
+    setFetchError(null);
+
+    const retry = async () => {
+      try {
+        await getNote(slug);
+      } catch (error: unknown) {
+        if (axios.isAxiosError(error) && error.response?.status === 404) {
+          setNotFound(true);
+        } else {
+          setFetchError(
+            "Failed to load the note. Please check your connection and try again.",
+          );
+        }
+      } finally {
+        setFetchingNote(false);
+      }
+    };
+
+    void retry();
+  };
 
   const onSubmit = async (data: UpdateNoteInput) => {
     if (!note) return;
@@ -107,7 +150,7 @@ export default function NoteEdit(): ReactElement {
     }
   };
 
-  if (fetchingNote) {
+  if (fetchingNote || (loading && !note)) {
     return (
       <div className="flex items-center justify-center py-12">
         <p className="text-sm text-gray-500">Loading note...</p>
@@ -115,7 +158,36 @@ export default function NoteEdit(): ReactElement {
     );
   }
 
-  if (notFound || !note) {
+  if (notFound) {
+    return <NotFound message="The note you are looking for does not exist." />;
+  }
+
+  if (fetchError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <p className="text-sm text-red-500">{fetchError}</p>
+
+        <button
+          type="button"
+          onClick={handleRetry}
+          className="
+            mt-4
+            rounded-md
+            bg-black
+            px-4 py-2
+            text-sm
+            text-white
+            hover:bg-gray-800
+            transition
+          "
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  if (!note) {
     return <NotFound message="The note you are looking for does not exist." />;
   }
 

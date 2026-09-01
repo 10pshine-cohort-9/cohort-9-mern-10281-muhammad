@@ -21,6 +21,7 @@ export default function SearchModal({
 
   const searchResults = useNotesStore((s) => s.searchResults);
   const searching = useNotesStore((s) => s.searching);
+  const error = useNotesStore((s) => s.error);
   const searchNotes = useNotesStore((s) => s.searchNotes);
   const clearSearch = useNotesStore((s) => s.clearSearch);
 
@@ -108,7 +109,7 @@ export default function SearchModal({
     const value = query.trim();
 
     const timeout = setTimeout(() => {
-      searchNotes(value);
+      void searchNotes(value).catch(() => {});
     }, 300);
 
     return () => clearTimeout(timeout);
@@ -182,6 +183,10 @@ export default function SearchModal({
             <p className="px-4 py-8 text-center text-sm text-gray-400">
               Searching...
             </p>
+          ) : error ? (
+            <p className="px-4 py-8 text-center text-sm text-red-500">
+              Unable to search notes. Please try again.
+            </p>
           ) : searchResults.length > 0 ? (
             searchResults.map((note) => (
               <Link
@@ -219,17 +224,17 @@ export default function SearchModal({
 
         <div className="flex items-center justify-between border-t border-gray-200 px-4 py-2 text-xs text-gray-400">
           <span>
-            <kbd className="px-1.5 py-0.5 border border-gray-300 rounded">
+            <kbd className="rounded border border-gray-300 px-1.5 py-0.5">
               Ctrl
             </kbd>{" "}
             +{" "}
-            <kbd className="px-1.5 py-0.5 border border-gray-300 rounded">
+            <kbd className="rounded border border-gray-300 px-1.5 py-0.5">
               K
             </kbd>
           </span>
 
           <span>
-            <kbd className="px-1.5 py-0.5 border border-gray-300 rounded">
+            <kbd className="rounded border border-gray-300 px-1.5 py-0.5">
               Esc
             </kbd>{" "}
             to close

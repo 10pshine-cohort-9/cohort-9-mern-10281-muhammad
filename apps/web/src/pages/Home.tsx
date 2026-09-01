@@ -76,14 +76,11 @@ export default function Home(): ReactElement {
   return (
     <>
       <PageHeader>
-        <h1 classNamsortOptionse="text-xl font-semibold">Your Notes</h1>
+        <h1 className="text-xl font-semibold">Your Notes</h1>
 
         <div className="flex items-center gap-2">
-          <div className="relative flex items-center">
-            <Filter
-              size={14}
-              className="absolute left-2.5 text-gray-500 pointer-events-none"
-            />
+          <div className="flex items-center gap-1">
+            <Filter size={14} className="shrink-0 text-gray-500" />
 
             <Select
               value={sort}

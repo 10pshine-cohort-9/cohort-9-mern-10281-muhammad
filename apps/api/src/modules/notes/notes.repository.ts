@@ -21,10 +21,20 @@ export default class NotesRepository {
   ): Promise<NoteDocument[]> => {
     const filter: Record<string, unknown> = { userId };
 
-    if (search?.trim()) {
+    const searchTerm = search?.trim();
+
+    if (searchTerm) {
+      const MAX_SEARCH_LENGTH = 100;
+
+      if (searchTerm.length > MAX_SEARCH_LENGTH) {
+        throw new Error("Search term is too long");
+      }
+
+      const escapedSearch = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
       filter.$or = [
-        { title: { $regex: search.trim(), $options: "i" } },
-        { content: { $regex: search.trim(), $options: "i" } },
+        { title: { $regex: escapedSearch, $options: "i" } },
+        { content: { $regex: escapedSearch, $options: "i" } },
       ];
     }
 

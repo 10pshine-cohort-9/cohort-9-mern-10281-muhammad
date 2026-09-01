@@ -1,3 +1,4 @@
+import axios from "axios";
 import DOMPurify from "dompurify";
 import { ArrowLeft, Edit2, Trash2 } from "lucide-react";
 import { useEffect, useState, type ReactElement } from "react";
@@ -21,6 +22,7 @@ export default function NoteView(): ReactElement {
 
   const [fetchingNote, setFetchingNote] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -37,6 +39,8 @@ export default function NoteView(): ReactElement {
 
     if (note) {
       setFetchingNote(false);
+      setNotFound(false);
+      setFetchError(null);
       return;
     }
 
@@ -45,12 +49,19 @@ export default function NoteView(): ReactElement {
     const fetchNote = async () => {
       setFetchingNote(true);
       setNotFound(false);
+      setFetchError(null);
 
       try {
         await getNote(slug);
-      } catch {
-        if (!cancelled) {
+      } catch (error: unknown) {
+        if (cancelled) return;
+
+        if (axios.isAxiosError(error) && error.response?.status === 404) {
           setNotFound(true);
+        } else {
+          setFetchError(
+            "Failed to load the note. Please check your connection and try again.",
+          );
         }
       } finally {
         if (!cancelled) {
@@ -59,12 +70,44 @@ export default function NoteView(): ReactElement {
       }
     };
 
-    fetchNote();
+    void fetchNote();
 
     return () => {
       cancelled = true;
     };
   }, [slug, note, getNote]);
+
+  const handleRetry = () => {
+    if (!slug) return;
+
+    let cancelled = false;
+
+    setFetchingNote(true);
+    setNotFound(false);
+    setFetchError(null);
+
+    const retry = async () => {
+      try {
+        await getNote(slug);
+      } catch (error: unknown) {
+        if (cancelled) return;
+
+        if (axios.isAxiosError(error) && error.response?.status === 404) {
+          setNotFound(true);
+        } else {
+          setFetchError(
+            "Failed to load the note. Please check your connection and try again.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setFetchingNote(false);
+        }
+      }
+    };
+
+    void retry();
+  };
 
   const handleDelete = async () => {
     if (!note) return;
@@ -96,7 +139,36 @@ export default function NoteView(): ReactElement {
     );
   }
 
-  if (notFound || !note) {
+  if (notFound) {
+    return <NotFound message="The note you are looking for does not exist." />;
+  }
+
+  if (fetchError) {
+    return (
+      <div className="mx-auto max-w-3xl py-12 text-center">
+        <p className="text-sm text-red-500">{fetchError}</p>
+
+        <button
+          type="button"
+          onClick={handleRetry}
+          className="
+            mt-4
+            rounded-md
+            bg-black
+            px-4 py-2
+            text-sm
+            text-white
+            hover:bg-gray-800
+            transition
+          "
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  if (!note) {
     return <NotFound message="The note you are looking for does not exist." />;
   }
 

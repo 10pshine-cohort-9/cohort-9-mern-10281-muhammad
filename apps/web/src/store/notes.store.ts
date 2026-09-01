@@ -10,6 +10,10 @@ export type Note = {
   updatedAt: string;
 };
 
+type ApiResponse<T> = {
+  data: T;
+};
+
 type ApiError = {
   message: string;
 };
@@ -65,7 +69,7 @@ export const useNotesStore = create<NotesState>((set) => ({
     });
 
     try {
-      const res = await api.get("/notes");
+      const res = await api.get<ApiResponse<Note[]>>("/notes");
 
       set({
         notes: res.data.data,
@@ -103,7 +107,7 @@ export const useNotesStore = create<NotesState>((set) => ({
     });
 
     try {
-      const res = await api.get("/notes", {
+      const res = await api.get<ApiResponse<Note[]>>("/notes", {
         params: {
           search: value,
         },
@@ -138,8 +142,8 @@ export const useNotesStore = create<NotesState>((set) => ({
     });
 
     try {
-      const res = await api.get(`/notes/${slug}`);
-      const note: Note = res.data.data;
+      const res = await api.get<ApiResponse<Note>>(`/notes/${slug}`);
+      const note = res.data.data;
 
       set((state) => {
         const exists = state.notes.some((item) => item.slug === note.slug);
@@ -170,8 +174,8 @@ export const useNotesStore = create<NotesState>((set) => ({
     });
 
     try {
-      const res = await api.post("/notes", data);
-      const note: Note = res.data.data;
+      const res = await api.post<ApiResponse<Note>>("/notes", data);
+      const note = res.data.data;
 
       set((state) => ({
         notes: [note, ...state.notes],
@@ -191,9 +195,9 @@ export const useNotesStore = create<NotesState>((set) => ({
     });
 
     try {
-      const res = await api.patch(`/notes/${slug}`, data);
+      const res = await api.patch<ApiResponse<Note>>(`/notes/${slug}`, data);
 
-      const note: Note = res.data.data;
+      const note = res.data.data;
 
       set((state) => ({
         notes: state.notes.map((item) => (item.slug === slug ? note : item)),
@@ -233,7 +237,6 @@ export const useNotesStore = create<NotesState>((set) => ({
     }
   },
 
-  // Clear search
   clearSearch: () => {
     searchRequestId++;
 

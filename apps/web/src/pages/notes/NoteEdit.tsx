@@ -3,27 +3,30 @@ import { useEffect, useState, type ReactElement } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import NotFound from "../NotFound";
+import FormField from "../../components/FormField";
 import PageHeader from "../../components/PageHeader";
 import RichEditor from "../../components/RichEditor";
+import NotFound from "../NotFound";
 import { useNotesStore } from "../../store/notes.store";
 import {
   updateNoteSchema,
   type UpdateNoteInput,
 } from "../../validation/notes.validation";
-import FormField from "../../components/FormField";
 
 export default function NoteEdit(): ReactElement {
-  const { slug } = useParams();
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
 
-  const notes = useNotesStore((s) => s.notes);
-  const updateNote = useNotesStore((s) => s.updateNote);
-  const loading = useNotesStore((s) => s.loading);
+  const notes = useNotesStore((state) => state.notes);
+  const getNote = useNotesStore((state) => state.getNote);
+  const updateNote = useNotesStore((state) => state.updateNote);
+  const loading = useNotesStore((state) => state.loading);
 
-  const note = notes.find((n) => n.slug === slug);
+  const note = notes.find((item) => item.slug === slug);
 
-  const [content, setContent] = useState("<p></p>");
+  const [content, setContent] = useState("");
+  const [fetchingNote, setFetchingNote] = useState(!note);
+  const [notFound, setNotFound] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
   const {
@@ -41,14 +44,46 @@ export default function NoteEdit(): ReactElement {
   });
 
   useEffect(() => {
+    if (!slug || note) {
+      setFetchingNote(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchNote = async () => {
+      setFetchingNote(true);
+      setNotFound(false);
+
+      try {
+        await getNote(slug);
+      } catch (error) {
+        if (cancelled) return;
+
+        setNotFound(true);
+      } finally {
+        if (!cancelled) {
+          setFetchingNote(false);
+        }
+      }
+    };
+
+    fetchNote();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, note, getNote]);
+
+  useEffect(() => {
     if (!note) return;
 
     reset({
-      title: note.title || "",
-      content: note.content || "",
+      title: note.title,
+      content: note.content,
     });
 
-    setContent(note.content || "<p></p>");
+    setContent(note.content || "");
   }, [note, reset]);
 
   const onSubmit = async (data: UpdateNoteInput) => {
@@ -58,7 +93,7 @@ export default function NoteEdit(): ReactElement {
 
     try {
       await updateNote(note.slug, {
-        ...data,
+        title: data.title,
         content,
       });
 
@@ -72,7 +107,15 @@ export default function NoteEdit(): ReactElement {
     }
   };
 
-  if (!note) {
+  if (fetchingNote) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-sm text-gray-500">Loading note...</p>
+      </div>
+    );
+  }
+
+  if (notFound || !note) {
     return <NotFound message="The note you are looking for does not exist." />;
   }
 
@@ -87,13 +130,13 @@ export default function NoteEdit(): ReactElement {
           <Link
             to={`/n/${note.slug}`}
             className="
-                px-4 py-2
-                text-sm
-                rounded-md
-                border border-gray-300
-                hover:bg-gray-50
-                transition
-              "
+              px-4 py-2
+              text-sm
+              rounded-md
+              border border-gray-300
+              hover:bg-gray-50
+              transition
+            "
           >
             Cancel
           </Link>
@@ -103,15 +146,15 @@ export default function NoteEdit(): ReactElement {
             form="note-edit-form"
             disabled={saving}
             className="
-                px-4 py-2
-                text-sm
-                bg-black
-                text-white
-                rounded-md
-                hover:bg-black/90
-                transition
-                disabled:opacity-50
-              "
+              px-4 py-2
+              text-sm
+              bg-black
+              text-white
+              rounded-md
+              hover:bg-black/90
+              transition
+              disabled:opacity-50
+            "
           >
             {saving ? "Saving..." : "Update"}
           </button>
@@ -125,19 +168,30 @@ export default function NoteEdit(): ReactElement {
       >
         <FormField
           placeholder="Untitled note"
-          className="w-full text-2xl font-semibold border-none outline-none focus:outline-none focus:ring-0 placeholder:text-gray-300 bg-transparent px-0"
+          className="
+            w-full
+            text-2xl
+            font-semibold
+            border-none
+            outline-none
+            focus:outline-none
+            focus:ring-0
+            placeholder:text-gray-300
+            bg-transparent
+            px-0
+          "
           type="text"
           registration={register("title")}
           error={errors.title?.message}
         />
 
-        <div className="border border-gray-300 rounded-md bg-white overflow-hidden">
+        <div className="overflow-hidden rounded-md border border-gray-300 bg-white">
           <RichEditor
             value={content}
-            onChange={(val) => {
-              setContent(val);
+            onChange={(value) => {
+              setContent(value);
 
-              setValue("content", val, {
+              setValue("content", value, {
                 shouldValidate: true,
                 shouldDirty: true,
               });
@@ -150,10 +204,7 @@ export default function NoteEdit(): ReactElement {
         )}
 
         {updateError && (
-          <p
-            role="alert"
-            className="text-sm text-red-500"
-          >
+          <p role="alert" className="text-sm text-red-500">
             {updateError}
           </p>
         )}

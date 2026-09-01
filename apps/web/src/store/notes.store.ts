@@ -1,5 +1,4 @@
 import axios from "axios";
-import axios from "axios";
 import { create } from "zustand";
 
 import { api } from "../api/axios";
@@ -24,10 +23,17 @@ type NotesState = {
   error: string | null;
 
   createNote: (data: { title: string; content: string }) => Promise<void>;
+
   getNotes: () => Promise<void>;
   searchNotes: (query: string) => Promise<void>;
-  getNote: (slug: string) => Promise<void>;
-  updateNote: (slug: string, data: UpdateNoteData) => Promise<void>;
+  getNote: (slug: string) => Promise<Note>;
+  updateNote: (
+    slug: string,
+    data: {
+      title?: string;
+      content?: string;
+    },
+  ) => Promise<void>;
   deleteNote: (slug: string) => Promise<void>;
 
   clearSearch: () => void;
@@ -36,7 +42,7 @@ type NotesState = {
 
 let searchRequestId = 0;
 
-const getErrorMessage = (error: unknown, fallback: string) => {
+const getErrorMessage = (error: unknown, fallback: string): string => {
   if (axios.isAxiosError<ApiError>(error)) {
     return error.response?.data?.message || fallback;
   }
@@ -44,7 +50,7 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   return fallback;
 };
 
-export const useNotesStore = create<NotesState>((set, get) => ({
+export const useNotesStore = create<NotesState>((set) => ({
   notes: [],
   searchResults: [],
 
@@ -68,9 +74,10 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     } catch (error: unknown) {
       set({
         error: getErrorMessage(error, "Failed to fetch notes"),
-        error: getErrorMessage(error, "Failed to fetch notes"),
         loading: false,
       });
+
+      throw error;
     }
   },
 
@@ -78,7 +85,13 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     const value = query.trim();
 
     if (!value) {
-      set({ searchResults: [] });
+      searchRequestId++;
+
+      set({
+        searchResults: [],
+        searching: false,
+      });
+
       return;
     }
 
@@ -91,22 +104,30 @@ export const useNotesStore = create<NotesState>((set, get) => ({
 
     try {
       const res = await api.get("/notes", {
-        params: { search: value },
+        params: {
+          search: value,
+        },
       });
 
-      if (requestId !== searchRequestId) return;
+      if (requestId !== searchRequestId) {
+        return;
+      }
 
       set({
         searchResults: res.data.data,
         searching: false,
       });
     } catch (error: unknown) {
-      if (requestId !== searchRequestId) return;
+      if (requestId !== searchRequestId) {
+        return;
+      }
 
       set({
         error: getErrorMessage(error, "Failed to search notes"),
         searching: false,
       });
+
+      throw error;
     }
   },
 
@@ -120,23 +141,33 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       const res = await api.get(`/notes/${slug}`);
       const note: Note = res.data.data;
 
-      set((state) => ({
-        notes: state.notes.some((n) => n.slug === note.slug)
-          ? state.notes.map((n) => (n.slug === note.slug ? note : n))
-          : [...state.notes, note],
-        loading: false,
-      }));
+      set((state) => {
+        const exists = state.notes.some((item) => item.slug === note.slug);
+
+        return {
+          notes: exists
+            ? state.notes.map((item) => (item.slug === note.slug ? note : item))
+            : [note, ...state.notes],
+
+          loading: false,
+        };
+      });
+
+      return note;
     } catch (error: unknown) {
       set({
         error: getErrorMessage(error, "Failed to fetch note"),
-        error: getErrorMessage(error, "Failed to fetch note"),
         loading: false,
       });
+
+      throw error;
     }
   },
 
   createNote: async (data) => {
-    set({ error: null });
+    set({
+      error: null,
+    });
 
     try {
       const res = await api.post("/notes", data);
@@ -151,20 +182,25 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       });
 
       throw error;
-
-      throw error;
     }
   },
 
   updateNote: async (slug, data) => {
-    set({ error: null });
+    set({
+      error: null,
+    });
 
     try {
       const res = await api.patch(`/notes/${slug}`, data);
+
       const note: Note = res.data.data;
 
       set((state) => ({
         notes: state.notes.map((item) => (item.slug === slug ? note : item)),
+
+        searchResults: state.searchResults.map((item) =>
+          item.slug === slug ? note : item,
+        ),
       }));
     } catch (error: unknown) {
       set({
@@ -172,19 +208,20 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       });
 
       throw error;
-
-      throw error;
     }
   },
 
   deleteNote: async (slug) => {
-    set({ error: null });
+    set({
+      error: null,
+    });
 
     try {
       await api.delete(`/notes/${slug}`);
 
       set((state) => ({
         notes: state.notes.filter((note) => note.slug !== slug),
+
         searchResults: state.searchResults.filter((note) => note.slug !== slug),
       }));
     } catch (error: unknown) {
@@ -193,11 +230,10 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       });
 
       throw error;
-
-      throw error;
     }
   },
 
+  // Clear search
   clearSearch: () => {
     searchRequestId++;
 
@@ -207,5 +243,9 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     });
   },
 
-  clearError: () => set({ error: null }),
+  clearError: () => {
+    set({
+      error: null,
+    });
+  },
 }));

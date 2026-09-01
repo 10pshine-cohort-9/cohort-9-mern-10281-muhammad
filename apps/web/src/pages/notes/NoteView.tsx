@@ -1,34 +1,70 @@
+import DOMPurify from "dompurify";
 import { ArrowLeft, Edit2, Trash2 } from "lucide-react";
 import { useEffect, useState, type ReactElement } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import DOMPurify from "dompurify";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
-import NotFound from "../NotFound";
 import ConfirmModal from "../../components/ConfirmModal";
 import PageHeader from "../../components/PageHeader";
 import Tooltip from "../../components/Tooltip";
 import { useNotesStore } from "../../store/notes.store";
 import { formatDate } from "../../utils/formatDate";
+import NotFound from "../NotFound";
 
 export default function NoteView(): ReactElement {
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
 
-  const notes = useNotesStore((s) => s.notes);
-  const getNotes = useNotesStore((s) => s.getNotes);
-  const deleteNote = useNotesStore((s) => s.deleteNote);
-  const loading = useNotesStore((s) => s.loading);
+  const notes = useNotesStore((state) => state.notes);
+  const getNote = useNotesStore((state) => state.getNote);
+  const deleteNote = useNotesStore((state) => state.deleteNote);
+  const loading = useNotesStore((state) => state.loading);
+
+  const [fetchingNote, setFetchingNote] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!notes.length) {
-      getNotes();
-    }
-  }, [getNotes, notes.length]);
+  const note = notes.find((item) => item.slug === slug);
 
-  const note = useNotesStore((s) => s.note);
+  useEffect(() => {
+    if (!slug) {
+      setFetchingNote(false);
+      setNotFound(true);
+      return;
+    }
+
+    if (note) {
+      setFetchingNote(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchNote = async () => {
+      setFetchingNote(true);
+      setNotFound(false);
+
+      try {
+        await getNote(slug);
+      } catch {
+        if (!cancelled) {
+          setNotFound(true);
+        }
+      } finally {
+        if (!cancelled) {
+          setFetchingNote(false);
+        }
+      }
+    };
+
+    fetchNote();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, note, getNote]);
 
   const handleDelete = async () => {
     if (!note) return;
@@ -52,15 +88,15 @@ export default function NoteView(): ReactElement {
     }
   };
 
-  if (loading && !note) {
+  if (fetchingNote || (loading && !note)) {
     return (
-      <div className="max-w-3xl mx-auto py-6">
+      <div className="mx-auto max-w-3xl py-6">
         <p className="text-sm text-gray-500">Loading note...</p>
       </div>
     );
   }
 
-  if (!note) {
+  if (notFound || !note) {
     return <NotFound message="The note you are looking for does not exist." />;
   }
 
@@ -84,7 +120,6 @@ export default function NoteView(): ReactElement {
         <div className="flex items-center gap-1">
           <Tooltip text="Edit">
             <Link
-              aria-label="Edit note"
               to={`/n/${note.slug}/edit`}
               aria-label="Edit note"
               className="

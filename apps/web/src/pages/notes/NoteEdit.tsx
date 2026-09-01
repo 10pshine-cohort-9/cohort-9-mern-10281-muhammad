@@ -141,7 +141,7 @@ export default function NoteEdit(): ReactElement {
       });
 
       navigate(`/n/${note.slug}`);
-    } catch (error) {
+    } catch (error: unknown) {
       setUpdateError(
         error instanceof Error
           ? error.message
@@ -177,8 +177,8 @@ export default function NoteEdit(): ReactElement {
             px-4 py-2
             text-sm
             text-white
-            hover:bg-gray-800
             transition
+            hover:bg-gray-800
           "
         >
           Try again
@@ -202,12 +202,12 @@ export default function NoteEdit(): ReactElement {
           <Link
             to={`/n/${note.slug}`}
             className="
-              px-4 py-2
-              text-sm
               rounded-md
               border border-gray-300
-              hover:bg-gray-50
+              px-4 py-2
+              text-sm
               transition
+              hover:bg-gray-50
             "
           >
             Cancel
@@ -218,13 +218,13 @@ export default function NoteEdit(): ReactElement {
             form="note-edit-form"
             disabled={saving}
             className="
+              rounded-md
+              bg-black
               px-4 py-2
               text-sm
-              bg-black
               text-white
-              rounded-md
-              hover:bg-black/90
               transition
+              hover:bg-black/90
               disabled:opacity-50
             "
           >
@@ -242,15 +242,15 @@ export default function NoteEdit(): ReactElement {
           placeholder="Untitled note"
           className="
             w-full
-            text-2xl
-            font-semibold
             border-none
-            outline-none
-            focus:outline-none
-            focus:ring-0
-            placeholder:text-gray-300
             bg-transparent
             px-0
+            text-2xl
+            font-semibold
+            outline-none
+            placeholder:text-gray-300
+            focus:outline-none
+            focus:ring-0
           "
           type="text"
           registration={register("title")}

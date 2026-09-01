@@ -80,8 +80,6 @@ export default function NoteView(): ReactElement {
   const handleRetry = () => {
     if (!slug) return;
 
-    let cancelled = false;
-
     setFetchingNote(true);
     setNotFound(false);
     setFetchError(null);
@@ -90,8 +88,6 @@ export default function NoteView(): ReactElement {
       try {
         await getNote(slug);
       } catch (error: unknown) {
-        if (cancelled) return;
-
         if (axios.isAxiosError(error) && error.response?.status === 404) {
           setNotFound(true);
         } else {
@@ -100,9 +96,7 @@ export default function NoteView(): ReactElement {
           );
         }
       } finally {
-        if (!cancelled) {
-          setFetchingNote(false);
-        }
+        setFetchingNote(false);
       }
     };
 
@@ -120,7 +114,7 @@ export default function NoteView(): ReactElement {
 
       setDeleteOpen(false);
       navigate("/");
-    } catch (error) {
+    } catch (error: unknown) {
       setDeleteError(
         error instanceof Error
           ? error.message
@@ -158,8 +152,8 @@ export default function NoteView(): ReactElement {
             px-4 py-2
             text-sm
             text-white
-            hover:bg-gray-800
             transition
+            hover:bg-gray-800
           "
         >
           Try again
@@ -181,8 +175,8 @@ export default function NoteView(): ReactElement {
             flex items-center gap-1.5
             text-sm
             text-gray-600
-            hover:text-black
             transition
+            hover:text-black
           "
         >
           <ArrowLeft size={16} />
@@ -195,12 +189,11 @@ export default function NoteView(): ReactElement {
               to={`/n/${note.slug}/edit`}
               aria-label="Edit note"
               className="
-                flex items-center justify-center
-                w-8 h-8
+                flex h-8 w-8 items-center justify-center
                 rounded-md
                 text-gray-600
-                hover:bg-gray-100
                 transition
+                hover:bg-gray-100
               "
             >
               <Edit2 size={16} />
@@ -213,12 +206,11 @@ export default function NoteView(): ReactElement {
               aria-label="Delete note"
               onClick={() => setDeleteOpen(true)}
               className="
-                flex items-center justify-center
-                w-8 h-8
+                flex h-8 w-8 items-center justify-center
                 rounded-md
                 text-red-500
-                hover:bg-red-50
                 transition
+                hover:bg-red-50
               "
             >
               <Trash2 size={16} />
@@ -240,11 +232,11 @@ export default function NoteView(): ReactElement {
       <div
         className="
           prose prose-sm max-w-none
+          leading-relaxed
           prose-headings:text-gray-900
           prose-p:text-gray-700
           prose-strong:text-gray-900
           prose-li:text-gray-700
-          leading-relaxed
         "
         dangerouslySetInnerHTML={{
           __html: DOMPurify.sanitize(note.content || ""),

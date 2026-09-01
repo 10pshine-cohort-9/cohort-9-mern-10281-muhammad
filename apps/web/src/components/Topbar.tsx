@@ -41,7 +41,6 @@ export default function TopBar(): ReactElement {
   } else if (isNoteRoute) {
     const slug = paths[1];
 
-    // /n redirects to /
     if (slug === "new") {
       items.push({
         label: "New note",

@@ -24,6 +24,7 @@ export default function NoteEdit(): ReactElement {
   const note = notes.find((n) => n.slug === slug);
 
   const [content, setContent] = useState("<p></p>");
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   const {
     register,
@@ -53,12 +54,22 @@ export default function NoteEdit(): ReactElement {
   const onSubmit = async (data: UpdateNoteInput) => {
     if (!note) return;
 
-    await updateNote(note.slug, {
-      ...data,
-      content,
-    });
+    setUpdateError(null);
 
-    navigate(`/n/${note.slug}`);
+    try {
+      await updateNote(note.slug, {
+        ...data,
+        content,
+      });
+
+      navigate(`/n/${note.slug}`);
+    } catch (error) {
+      setUpdateError(
+        error instanceof Error
+          ? error.message
+          : "Failed to update the note. Please try again.",
+      );
+    }
   };
 
   if (!note) {
@@ -136,6 +147,15 @@ export default function NoteEdit(): ReactElement {
 
         {errors.content && (
           <p className="text-xs text-red-500">{errors.content.message}</p>
+        )}
+
+        {updateError && (
+          <p
+            role="alert"
+            className="text-sm text-red-500"
+          >
+            {updateError}
+          </p>
         )}
       </form>
     </>

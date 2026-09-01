@@ -11,6 +11,7 @@ import {
   updateNoteSchema,
   type UpdateNoteInput,
 } from "../../validation/notes.validation";
+import FormField from "../../components/FormField";
 
 export default function NoteEdit(): ReactElement {
   const { slug } = useParams();
@@ -23,6 +24,7 @@ export default function NoteEdit(): ReactElement {
   const note = notes.find((n) => n.slug === slug);
 
   const [content, setContent] = useState("<p></p>");
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   const {
     register,
@@ -52,12 +54,22 @@ export default function NoteEdit(): ReactElement {
   const onSubmit = async (data: UpdateNoteInput) => {
     if (!note) return;
 
-    await updateNote(note.slug, {
-      ...data,
-      content,
-    });
+    setUpdateError(null);
 
-    navigate(`/n/${note.slug}`);
+    try {
+      await updateNote(note.slug, {
+        ...data,
+        content,
+      });
+
+      navigate(`/n/${note.slug}`);
+    } catch (error) {
+      setUpdateError(
+        error instanceof Error
+          ? error.message
+          : "Failed to update the note. Please try again.",
+      );
+    }
   };
 
   if (!note) {
@@ -88,6 +100,7 @@ export default function NoteEdit(): ReactElement {
 
           <button
             type="submit"
+            form="note-edit-form"
             disabled={saving}
             className="
                 px-4 py-2
@@ -105,27 +118,18 @@ export default function NoteEdit(): ReactElement {
         </div>
       </PageHeader>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="space-y-1">
-          <input
-            type="text"
-            placeholder="Untitled note"
-            className="
-              w-full
-              text-2xl
-              font-semibold
-              border-none
-              outline-none
-              placeholder:text-gray-300
-              bg-transparent
-            "
-            {...register("title")}
-          />
-
-          {errors.title && (
-            <p className="text-xs text-red-500">{errors.title.message}</p>
-          )}
-        </div>
+      <form
+        id="note-edit-form"
+        onSubmit={handleSubmit(onSubmit)}
+        className="space-y-6"
+      >
+        <FormField
+          placeholder="Untitled note"
+          className="w-full text-2xl font-semibold border-none outline-none focus:outline-none focus:ring-0 placeholder:text-gray-300 bg-transparent px-0"
+          type="text"
+          registration={register("title")}
+          error={errors.title?.message}
+        />
 
         <div className="border border-gray-300 rounded-md bg-white overflow-hidden">
           <RichEditor
@@ -143,6 +147,15 @@ export default function NoteEdit(): ReactElement {
 
         {errors.content && (
           <p className="text-xs text-red-500">{errors.content.message}</p>
+        )}
+
+        {updateError && (
+          <p
+            role="alert"
+            className="text-sm text-red-500"
+          >
+            {updateError}
+          </p>
         )}
       </form>
     </>

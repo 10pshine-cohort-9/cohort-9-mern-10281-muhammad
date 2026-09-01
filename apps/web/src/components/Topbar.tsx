@@ -1,75 +1,111 @@
+import { FileText, Home, Pencil, Plus, User } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import type { ReactElement } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useMemo } from "react";
-import { FileText, Home, Plus, User } from "lucide-react";
-import type { ElementType, ReactElement } from "react";
 
-export type Route = { label: string; icon?: ElementType };
+import { useNotesStore } from "../store/notes.store";
 
-export const routeMeta: Record<string, Route> = {
-  "": { label: "Home", icon: Home },
-  n: { label: "Notes", icon: FileText },
+type RouteMeta = {
+  label: string;
+  icon?: LucideIcon;
+};
+
+const routeMeta: Record<string, RouteMeta> = {
   profile: { label: "Profile", icon: User },
   new: { label: "New note", icon: Plus },
+  edit: { label: "Edit", icon: Pencil },
+  "404": { label: "404" },
 };
 
 export default function TopBar(): ReactElement {
-  const location = useLocation();
+  const { pathname } = useLocation();
+  const notes = useNotesStore((s) => s.notes);
 
-  const paths = useMemo(
-    () => location.pathname.split("/").filter(Boolean),
-    [location.pathname],
-  );
+  const paths = pathname.split("/").filter(Boolean);
 
-  const items = useMemo(() => {
-    return paths.map((segment, index) => {
-      const url = "/" + paths.slice(0, index + 1).join("/");
+  const isHome = paths.length === 0;
+  const isNoteRoute = paths[0] === "n";
+  const is404 = paths[0] === "404";
 
-      const meta = routeMeta[segment] || {
-        label: segment.charAt(0).toUpperCase() + segment.slice(1),
-      };
+  const items: {
+    label: string;
+    icon?: LucideIcon;
+    url: string;
+  }[] = [];
 
-      const isActive = index === paths.length - 1;
-
-      return {
-        ...meta,
-        url,
-        isActive,
-      };
+  if (is404) {
+    items.push({
+      label: "404",
+      url: "/404",
     });
-  }, [paths]);
+  } else if (isNoteRoute) {
+    const slug = paths[1];
 
-  const isHomeActive = paths.length === 0;
+    if (slug === "new") {
+      items.push({
+        label: "New note",
+        icon: Plus,
+        url: "/n/new",
+      });
+    } else if (slug) {
+      const note = notes.find((note) => note.slug === slug);
+
+      items.push({
+        label: "Notes",
+        icon: FileText,
+        url: "/",
+      });
+
+      items.push({
+        label: note?.title || "Note",
+        url: `/n/${slug}`,
+      });
+
+      if (paths[2] === "edit") {
+        items.push({
+          label: "Edit",
+          icon: Pencil,
+          url: `/n/${slug}/edit`,
+        });
+      }
+    }
+  } else if (paths[0]) {
+    const segment = paths[0];
+    const meta = routeMeta[segment];
+
+    items.push({
+      label: meta?.label ?? "404",
+      icon: meta?.icon,
+      url: meta ? `/${segment}` : "/404",
+    });
+  }
 
   return (
-    <header className="h-16 px-6 flex items-center justify-between border-b bg-white border-gray-200">
+    <header className="h-16 px-6 flex items-center border-b border-gray-200 bg-white">
       <nav className="flex items-center text-sm text-gray-500">
-        {isHomeActive ? (
-          <div className="flex items-center gap-1 text-black font-medium">
-            <Home size={14} />
-            Home
-          </div>
-        ) : (
-          <Link
-            to="/"
-            className="flex items-center gap-1 hover:text-black transition"
-          >
-            <Home size={14} />
-            Home
-          </Link>
-        )}
+        <Link
+          to="/"
+          className={`flex items-center gap-1 transition ${
+            isHome ? "text-black font-medium" : "hover:text-black"
+          }`}
+        >
+          <Home size={14} />
+          Home
+        </Link>
 
-        {items.map((item) => {
+        {items.map((item, index) => {
           const Icon = item.icon;
+          const isLast = index === items.length - 1;
 
           return (
-            <div key={item.url} className="flex items-center">
+            <div key={`${item.url}-${index}`} className="flex items-center">
               <span className="mx-2 text-gray-300">/</span>
 
-              {item.isActive ? (
-                <div className="flex items-center gap-1 text-black font-medium">
+              {isLast ? (
+                <span className="flex items-center gap-1 text-black font-medium">
                   {Icon && <Icon size={14} />}
                   {item.label}
-                </div>
+                </span>
               ) : (
                 <Link
                   to={item.url}

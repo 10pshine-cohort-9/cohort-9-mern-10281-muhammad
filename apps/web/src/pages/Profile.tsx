@@ -1,14 +1,41 @@
 import axios from "axios";
 import { Eye, Pencil, Trash2 } from "lucide-react";
-import { useEffect, useState, type ReactElement } from "react";
+import { useEffect, useMemo, useState, type ReactElement } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import ConfirmModal from "../components/ConfirmModal";
 import PageHeader from "../components/PageHeader";
+import Select from "../components/Select";
 import Tooltip from "../components/Tooltip";
 import { authService } from "../services/auth.service";
 import { useAuthStore } from "../store/auth.store";
-import { useNotesStore } from "../store/notes.store";
+import { useNotesStore, type Note } from "../store/notes.store";
+import { SortingOptions, type SortOption } from "./Home";
+
+const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "");
+
+const sortNotes = (notes: Note[], sort: SortOption) => {
+  return [...notes].sort((a, b) => {
+    switch (sort) {
+      case "oldest":
+        return (
+          new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()
+        );
+
+      case "az":
+        return a.title.localeCompare(b.title);
+
+      case "za":
+        return b.title.localeCompare(a.title);
+
+      case "updated":
+      default:
+        return (
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        );
+    }
+  });
+};
 
 export default function Profile(): ReactElement {
   const navigate = useNavigate();
@@ -21,6 +48,7 @@ export default function Profile(): ReactElement {
   const deleteNote = useNotesStore((s) => s.deleteNote);
   const loading = useNotesStore((s) => s.loading);
 
+  const [sort, setSort] = useState<SortOption>("updated");
   const [deleteSlug, setDeleteSlug] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -28,6 +56,8 @@ export default function Profile(): ReactElement {
   useEffect(() => {
     getNotes();
   }, [getNotes]);
+
+  const sortedNotes = useMemo(() => sortNotes(notes, sort), [notes, sort]);
 
   const handleLogout = async () => {
     try {
@@ -66,8 +96,6 @@ export default function Profile(): ReactElement {
     }
   };
 
-  const stripHtml = (html: string) => html?.replace(/<[^>]*>/g, "") || "";
-
   return (
     <>
       <PageHeader>
@@ -90,14 +118,33 @@ export default function Profile(): ReactElement {
         <button
           type="button"
           onClick={handleLogout}
-          className="px-4 py-2 text-sm bg-black text-white rounded-md hover:bg-black/90"
+          className="
+            px-4 py-2
+            text-sm
+            bg-black
+            text-white
+            rounded-md
+            hover:bg-black/90
+            transition
+          "
         >
           Logout
         </button>
       </PageHeader>
 
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold">Your Notes</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Your Notes</h2>
+
+          {notes.length > 0 && (
+            <Select
+              value={sort}
+              onChange={(value) => setSort(value as SortOption)}
+              aria-label="Sort notes"
+              options={SortingOptions}
+            />
+          )}
+        </div>
 
         {loading && <p className="text-sm text-gray-500">Loading notes...</p>}
 
@@ -111,7 +158,7 @@ export default function Profile(): ReactElement {
           </div>
         )}
 
-        {!loading && notes.length > 0 && (
+        {!loading && sortedNotes.length > 0 && (
           <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
             <table className="w-full text-sm">
               <thead>
@@ -119,9 +166,11 @@ export default function Profile(): ReactElement {
                   <th className="px-4 py-3 text-left font-medium text-gray-500">
                     Title
                   </th>
+
                   <th className="px-4 py-3 text-left font-medium text-gray-500">
                     Preview
                   </th>
+
                   <th className="w-28 px-4 py-3 text-right font-medium text-gray-500">
                     Actions
                   </th>
@@ -129,20 +178,20 @@ export default function Profile(): ReactElement {
               </thead>
 
               <tbody className="divide-y divide-gray-100">
-                {notes.map((note) => (
+                {sortedNotes.map((note) => (
                   <tr
                     key={note.slug}
-                    className="group transition-colors hover:bg-gray-50"
+                    className="group hover:bg-gray-50 transition-colors"
                   >
                     <td className="px-4 py-3.5">
                       <Link
                         to={`/n/${note.slug}`}
                         className="
-                  font-medium
-                  text-gray-900
-                  hover:text-black
-                  transition-colors
-                "
+                          font-medium
+                          text-gray-900
+                          hover:text-black
+                          transition-colors
+                        "
                       >
                         {note.title || "Untitled"}
                       </Link>
@@ -161,13 +210,14 @@ export default function Profile(): ReactElement {
                             to={`/n/${note.slug}`}
                             aria-label="View note"
                             className="
-                      flex h-8 w-8 items-center justify-center
-                      rounded-md
-                      text-gray-500
-                      hover:bg-gray-100
-                      hover:text-gray-900
-                      transition
-                    "
+                              flex h-8 w-8
+                              items-center justify-center
+                              rounded-md
+                              text-gray-500
+                              hover:bg-gray-100
+                              hover:text-gray-900
+                              transition
+                            "
                           >
                             <Eye size={15} />
                           </Link>
@@ -178,13 +228,14 @@ export default function Profile(): ReactElement {
                             to={`/n/${note.slug}/edit`}
                             aria-label="Edit note"
                             className="
-                      flex h-8 w-8 items-center justify-center
-                      rounded-md
-                      text-gray-500
-                      hover:bg-gray-100
-                      hover:text-gray-900
-                      transition
-                    "
+                              flex h-8 w-8
+                              items-center justify-center
+                              rounded-md
+                              text-gray-500
+                              hover:bg-gray-100
+                              hover:text-gray-900
+                              transition
+                            "
                           >
                             <Pencil size={15} />
                           </Link>
@@ -199,13 +250,14 @@ export default function Profile(): ReactElement {
                             }}
                             aria-label="Delete note"
                             className="
-                      flex h-8 w-8 items-center justify-center
-                      rounded-md
-                      text-gray-400
-                      hover:bg-red-50
-                      hover:text-red-600
-                      transition
-                    "
+                              flex h-8 w-8
+                              items-center justify-center
+                              rounded-md
+                              text-gray-400
+                              hover:bg-red-50
+                              hover:text-red-600
+                              transition
+                            "
                           >
                             <Trash2 size={15} />
                           </button>

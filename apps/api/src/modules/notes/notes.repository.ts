@@ -17,8 +17,28 @@ export default class NotesRepository {
 
   findAllByUser = async (
     userId: mongoose.Types.ObjectId,
+    search?: string,
   ): Promise<NoteDocument[]> => {
-    return Note.find({ userId });
+    const filter: Record<string, unknown> = { userId };
+
+    const searchTerm = search?.trim();
+
+    if (searchTerm) {
+      const MAX_SEARCH_LENGTH = 100;
+
+      if (searchTerm.length > MAX_SEARCH_LENGTH) {
+        throw new Error("Search term is too long");
+      }
+
+      const escapedSearch = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+      filter.$or = [
+        { title: { $regex: escapedSearch, $options: "i" } },
+        { content: { $regex: escapedSearch, $options: "i" } },
+      ];
+    }
+
+    return Note.find(filter).sort({ updatedAt: -1 });
   };
 
   findByIdAndUser = async (

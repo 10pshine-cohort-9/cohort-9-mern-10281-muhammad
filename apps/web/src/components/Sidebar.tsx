@@ -28,27 +28,29 @@ export default function Sidebar(): ReactElement {
             <span className="font-semibold text-sm text-gray-800">NotPad</span>
           </Link>
 
-          <div className="flex items-center gap-1">
-            <Tooltip text="New note">
-              <button
-                onClick={() => navigate("/n/new")}
-                className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-200 text-gray-600 hover:text-black transition"
-                aria-label="Create new note"
-              >
-                <Plus size={16} />
-              </button>
-            </Tooltip>
+          {user && (
+            <div className="flex items-center gap-1">
+              <Tooltip text="New note">
+                <button
+                  onClick={() => navigate("/n/new")}
+                  className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-200 text-gray-600 hover:text-black transition"
+                  aria-label="Create new note"
+                >
+                  <Plus size={16} />
+                </button>
+              </Tooltip>
 
-            <Tooltip text="Search">
-              <button
-                onClick={() => setIsSearchOpen(true)}
-                className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-200 text-gray-600 hover:text-black transition"
-                aria-label="Search notes"
-              >
-                <Search size={16} />
-              </button>
-            </Tooltip>
-          </div>
+              <Tooltip text="Search">
+                <button
+                  onClick={() => setIsSearchOpen(true)}
+                  className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-200 text-gray-600 hover:text-black transition"
+                  aria-label="Search notes"
+                >
+                  <Search size={16} />
+                </button>
+              </Tooltip>
+            </div>
+          )}
         </div>
 
         {user && (
@@ -106,7 +108,9 @@ export default function Sidebar(): ReactElement {
         </div>
       </aside>
 
-      <SearchModal isOpen={isSearchOpen} setIsOpen={setIsSearchOpen} />
+      {user && (
+        <SearchModal isOpen={isSearchOpen} setIsOpen={setIsSearchOpen} />
+      )}
     </>
   );
 }

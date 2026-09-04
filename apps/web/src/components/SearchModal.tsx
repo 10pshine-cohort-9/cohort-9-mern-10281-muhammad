@@ -3,11 +3,17 @@ import { useEffect, useRef, useState, type ReactElement } from "react";
 import { Link } from "react-router-dom";
 
 import { useNotesStore } from "../store/notes.store";
+import { useEffect, useRef, useState, type ReactElement } from "react";
+import { Link } from "react-router-dom";
+
+import { useNotesStore } from "../store/notes.store";
 
 interface Props {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }
+
+const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "");
 
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "");
 
@@ -21,13 +27,13 @@ export default function SearchModal({
 
   const searchResults = useNotesStore((s) => s.searchResults);
   const searching = useNotesStore((s) => s.searching);
-  const error = useNotesStore((s) => s.error);
   const searchNotes = useNotesStore((s) => s.searchNotes);
   const clearSearch = useNotesStore((s) => s.clearSearch);
 
   const [query, setQuery] = useState("");
 
   useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
 
@@ -54,6 +60,11 @@ export default function SearchModal({
     return () => {
       window.removeEventListener("keydown", handleGlobalKeyDown);
     };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleGlobalKeyDown);
+    };
   }, [setIsOpen]);
 
   useEffect(() => {
@@ -61,8 +72,18 @@ export default function SearchModal({
       clearSearch();
       return;
     }
+    if (!isOpen) {
+      clearSearch();
+      return;
+    }
 
     previouslyFocusedElement.current = document.activeElement as HTMLElement;
+
+    setQuery("");
+
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
 
     setQuery("");
 
@@ -81,12 +102,26 @@ export default function SearchModal({
       const focusable = modalRef.current?.querySelectorAll<HTMLElement>(
         'a[href], button, input, [tabindex]:not([tabindex="-1"])',
       );
+      if (e.key !== "Tab") return;
 
+      const focusable = modalRef.current?.querySelectorAll<HTMLElement>(
+        'a[href], button, input, [tabindex]:not([tabindex="-1"])',
+      );
+
+      if (!focusable?.length) return;
       if (!focusable?.length) return;
 
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
 
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
       if (e.shiftKey && document.activeElement === first) {
         e.preventDefault();
         last.focus();
@@ -103,13 +138,18 @@ export default function SearchModal({
     };
   }, [isOpen, setIsOpen, clearSearch]);
 
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, setIsOpen, clearSearch]);
+
   useEffect(() => {
     if (!isOpen) return;
 
     const value = query.trim();
 
     const timeout = setTimeout(() => {
-      void searchNotes(value).catch(() => {});
+      searchNotes(value);
     }, 300);
 
     return () => clearTimeout(timeout);
@@ -118,6 +158,7 @@ export default function SearchModal({
   useEffect(() => {
     if (!isOpen && previouslyFocusedElement.current) {
       previouslyFocusedElement.current.focus();
+      previouslyFocusedElement.current = null;
       previouslyFocusedElement.current = null;
     }
   }, [isOpen]);
@@ -136,10 +177,25 @@ export default function SearchModal({
         bg-black/30
         backdrop-blur-sm
       "
+      className="
+        fixed inset-0 z-50
+        flex items-start justify-center
+        pt-24
+        bg-black/30
+        backdrop-blur-sm
+      "
       onClick={() => setIsOpen(false)}
     >
       <div
         ref={modalRef}
+        className="
+          w-full max-w-md
+          overflow-hidden
+          bg-white
+          rounded-xl
+          border border-gray-200
+          shadow-lg
+        "
         className="
           w-full max-w-md
           overflow-hidden
@@ -161,12 +217,29 @@ export default function SearchModal({
             className="shrink-0 text-gray-500"
           />
 
+        <div className="flex items-center border-b border-gray-200 px-4">
+          <Search
+            size={16}
+            aria-hidden="true"
+            className="shrink-0 text-gray-500"
+          />
+
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
             aria-label="Search notes"
             placeholder="Search notes..."
+            autoComplete="off"
+            className="
+              w-full
+              px-3 py-3
+              text-sm
+              outline-none
+              bg-transparent
+            "
             autoComplete="off"
             className="
               w-full
@@ -182,10 +255,6 @@ export default function SearchModal({
           {searching ? (
             <p className="px-4 py-8 text-center text-sm text-gray-400">
               Searching...
-            </p>
-          ) : error ? (
-            <p className="px-4 py-8 text-center text-sm text-red-500">
-              Unable to search notes. Please try again.
             </p>
           ) : searchResults.length > 0 ? (
             searchResults.map((note) => (
@@ -224,17 +293,18 @@ export default function SearchModal({
 
         <div className="flex items-center justify-between border-t border-gray-200 px-4 py-2 text-xs text-gray-400">
           <span>
-            <kbd className="rounded border border-gray-300 px-1.5 py-0.5">
+            <kbd className="px-1.5 py-0.5 border border-gray-300 rounded">
               Ctrl
             </kbd>{" "}
             +{" "}
-            <kbd className="rounded border border-gray-300 px-1.5 py-0.5">
+            <kbd className="px-1.5 py-0.5 border border-gray-300 rounded">
               K
             </kbd>
           </span>
 
+
           <span>
-            <kbd className="rounded border border-gray-300 px-1.5 py-0.5">
+            <kbd className="px-1.5 py-0.5 border border-gray-300 rounded">
               Esc
             </kbd>{" "}
             to close

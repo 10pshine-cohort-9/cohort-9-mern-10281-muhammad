@@ -12,7 +12,7 @@ import {
   updateNoteSchema,
   type UpdateNoteInput,
 } from "../../validation/notes.validation";
-import NotFound from "../NotFound";
+import FormField from "../../components/FormField";
 
 export default function NoteEdit(): ReactElement {
   const { slug } = useParams<{ slug: string }>();
@@ -216,6 +216,7 @@ export default function NoteEdit(): ReactElement {
           <button
             type="submit"
             form="note-edit-form"
+            form="note-edit-form"
             disabled={saving}
             className="
               rounded-md
@@ -240,18 +241,7 @@ export default function NoteEdit(): ReactElement {
       >
         <FormField
           placeholder="Untitled note"
-          className="
-            w-full
-            border-none
-            bg-transparent
-            px-0
-            text-2xl
-            font-semibold
-            outline-none
-            placeholder:text-gray-300
-            focus:outline-none
-            focus:ring-0
-          "
+          className="w-full text-2xl font-semibold border-none outline-none focus:outline-none focus:ring-0 placeholder:text-gray-300 bg-transparent px-0"
           type="text"
           registration={register("title")}
           error={errors.title?.message}

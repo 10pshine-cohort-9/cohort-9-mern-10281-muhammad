@@ -1,14 +1,43 @@
 import axios from "axios";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactElement } from "react";
+import { useEffect, useMemo, useState, type ReactElement } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import ConfirmModal from "../components/ConfirmModal";
 import PageHeader from "../components/PageHeader";
 import Select from "../components/Select";
+import Select from "../components/Select";
 import Tooltip from "../components/Tooltip";
 import { authService } from "../services/auth.service";
 import { useAuthStore } from "../store/auth.store";
+import { useNotesStore, type Note } from "../store/notes.store";
+import { SortingOptions, type SortOption } from "./Home";
+
+const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "");
+
+const sortNotes = (notes: Note[], sort: SortOption) => {
+  return [...notes].sort((a, b) => {
+    switch (sort) {
+      case "oldest":
+        return (
+          new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()
+        );
+
+      case "az":
+        return a.title.localeCompare(b.title);
+
+      case "za":
+        return b.title.localeCompare(a.title);
+
+      case "updated":
+      default:
+        return (
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        );
+    }
+  });
+};
 import { useNotesStore, type Note } from "../store/notes.store";
 import { SortingOptions, type SortOption } from "./Home";
 
@@ -49,6 +78,7 @@ export default function Profile(): ReactElement {
   const loading = useNotesStore((s) => s.loading);
 
   const [sort, setSort] = useState<SortOption>("updated");
+  const [sort, setSort] = useState<SortOption>("updated");
   const [deleteSlug, setDeleteSlug] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -56,6 +86,8 @@ export default function Profile(): ReactElement {
   useEffect(() => {
     getNotes();
   }, [getNotes]);
+
+  const sortedNotes = useMemo(() => sortNotes(notes, sort), [notes, sort]);
 
   const sortedNotes = useMemo(() => sortNotes(notes, sort), [notes, sort]);
 
@@ -127,12 +159,33 @@ export default function Profile(): ReactElement {
             hover:bg-black/90
             transition
           "
+          className="
+            px-4 py-2
+            text-sm
+            bg-black
+            text-white
+            rounded-md
+            hover:bg-black/90
+            transition
+          "
         >
           Logout
         </button>
       </PageHeader>
 
       <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Your Notes</h2>
+
+          {notes.length > 0 && (
+            <Select
+              value={sort}
+              onChange={(value) => setSort(value as SortOption)}
+              aria-label="Sort notes"
+              options={SortingOptions}
+            />
+          )}
+        </div>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Your Notes</h2>
 
@@ -159,8 +212,21 @@ export default function Profile(): ReactElement {
         )}
 
         {!loading && sortedNotes.length > 0 && (
-          <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
             <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-50">
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">
+                    Title
+                  </th>
+
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">
+                    Preview
+                  </th>
+
+                  <th className="w-28 px-4 py-3 text-right font-medium text-gray-500">
+                    Actions
+                  </th>
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50">
                   <th className="px-4 py-3 text-left font-medium text-gray-500">
@@ -179,10 +245,25 @@ export default function Profile(): ReactElement {
 
               <tbody className="divide-y divide-gray-100">
                 {sortedNotes.map((note) => (
+              <tbody className="divide-y divide-gray-100">
+                {sortedNotes.map((note) => (
                   <tr
                     key={note.slug}
                     className="group hover:bg-gray-50 transition-colors"
+                    className="group hover:bg-gray-50 transition-colors"
                   >
+                    <td className="px-4 py-3.5">
+                      <Link
+                        to={`/n/${note.slug}`}
+                        className="
+                          font-medium
+                          text-gray-900
+                          hover:text-black
+                          transition-colors
+                        "
+                      >
+                        {note.title || "Untitled"}
+                      </Link>
                     <td className="px-4 py-3.5">
                       <Link
                         to={`/n/${note.slug}`}
@@ -201,8 +282,14 @@ export default function Profile(): ReactElement {
                       <p className="truncate text-gray-500">
                         {stripHtml(note.content).slice(0, 100) || "No content"}
                       </p>
+                    <td className="max-w-0 px-4 py-3.5">
+                      <p className="truncate text-gray-500">
+                        {stripHtml(note.content).slice(0, 100) || "No content"}
+                      </p>
                     </td>
 
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center justify-end gap-1">
                     <td className="px-4 py-3.5">
                       <div className="flex items-center justify-end gap-1">
                         <Tooltip text="View">
@@ -218,7 +305,17 @@ export default function Profile(): ReactElement {
                               hover:text-gray-900
                               transition
                             "
+                            className="
+                              flex h-8 w-8
+                              items-center justify-center
+                              rounded-md
+                              text-gray-500
+                              hover:bg-gray-100
+                              hover:text-gray-900
+                              transition
+                            "
                           >
+                            <Eye size={15} />
                             <Eye size={15} />
                           </Link>
                         </Tooltip>
@@ -236,7 +333,17 @@ export default function Profile(): ReactElement {
                               hover:text-gray-900
                               transition
                             "
+                            className="
+                              flex h-8 w-8
+                              items-center justify-center
+                              rounded-md
+                              text-gray-500
+                              hover:bg-gray-100
+                              hover:text-gray-900
+                              transition
+                            "
                           >
+                            <Pencil size={15} />
                             <Pencil size={15} />
                           </Link>
                         </Tooltip>
@@ -258,7 +365,17 @@ export default function Profile(): ReactElement {
                               hover:text-red-600
                               transition
                             "
+                            className="
+                              flex h-8 w-8
+                              items-center justify-center
+                              rounded-md
+                              text-gray-400
+                              hover:bg-red-50
+                              hover:text-red-600
+                              transition
+                            "
                           >
+                            <Trash2 size={15} />
                             <Trash2 size={15} />
                           </button>
                         </Tooltip>
